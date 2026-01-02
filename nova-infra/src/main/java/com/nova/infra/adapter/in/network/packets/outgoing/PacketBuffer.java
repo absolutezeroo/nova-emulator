@@ -2,7 +2,7 @@ package com.nova.infra.adapter.in.network.packets.outgoing;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.PooledByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,11 +28,24 @@ public class PacketBuffer {
     private final ByteBuf buffer;
     private final ByteBufOutputStream stream;
 
+    private static final int DEFAULT_INITIAL_CAPACITY = 256;
+
     /**
-     * Creates a new empty packet buffer.
+     * Creates a new packet buffer with default capacity (256 bytes).
+     * Uses Netty's pooled allocator for better memory efficiency.
      */
     public PacketBuffer() {
-        this.buffer = Unpooled.buffer();
+        this(DEFAULT_INITIAL_CAPACITY);
+    }
+
+    /**
+     * Creates a new packet buffer with specified initial capacity.
+     * Uses Netty's pooled allocator for better memory efficiency.
+     *
+     * @param initialCapacity initial buffer size in bytes
+     */
+    public PacketBuffer(int initialCapacity) {
+        this.buffer = PooledByteBufAllocator.DEFAULT.buffer(initialCapacity);
         this.stream = new ByteBufOutputStream(buffer);
     }
 
