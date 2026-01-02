@@ -1,35 +1,28 @@
 package com.nova.infra.adapter.in.network.packets.parsers;
 
-import com.nova.core.domain.port.out.network.NetworkConnection;
-import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.IIncomingPacket;
+import com.nova.infra.adapter.in.network.codec.ClientMessage;
 
 /**
- * Abstract base class for parsing incoming client packets.
- * <p>
- * Parsers are responsible for reading binary data from ClientMessage
- * and converting it into typed packet event objects.
- * <p>
- * Each parser handles a specific packet ID and produces a specific
- * event type that can be processed by a corresponding handler.
+ * Abstract base class for packet parsers.
+ * Parses raw ClientMessage bytes into typed event objects.
  *
- * @param <T> the type of incoming packet event this parser produces
+ * @param <T> The type of incoming packet this parser produces
  */
 public abstract class PacketParser<T extends IIncomingPacket> {
 
     /**
-     * Gets the packet ID this parser handles.
+     * Returns the header ID this parser handles.
      *
-     * @return the incoming packet header ID
+     * @return The packet header ID
      */
-    public abstract int getPacketId();
+    public abstract int getHeaderId();
 
     /**
-     * Parses raw binary data into a typed packet event.
+     * Parses the raw message into a typed event object.
      *
-     * @param connection the client connection
-     * @param message    the raw client message containing binary data
-     * @return the parsed packet event
+     * @param message The raw client message
+     * @return The parsed event object
      */
-    public abstract T parse(NetworkConnection connection, ClientMessage message);
+    public abstract T parse(ClientMessage message);
 }

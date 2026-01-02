@@ -4,60 +4,42 @@ import com.nova.infra.adapter.in.network.packets.IOutgoingPacket;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 
 /**
- * Abstract base class for composing outgoing packets.
- * <p>
- * Composers serialize typed message DTOs into PacketBuffer packets.
- * Each composer handles a specific message type and writes the
- * appropriate binary data according to the Habbo protocol.
+ * Abstract base class for packet composers.
+ * Serializes typed message objects into PacketBuffer for sending to the client.
  *
- * @param <T> the type of outgoing message this composer handles
+ * @param <T> The type of outgoing packet this composer handles
  */
 public abstract class PacketComposer<T extends IOutgoingPacket> {
 
     /**
-     * Gets the packet ID for this message type.
+     * Returns the packet ID (header) for this composer.
      *
-     * @return the outgoing packet header ID
+     * @return The packet header ID
      */
     public abstract int getPacketId();
 
     /**
-     * Composes the message into a PacketBuffer ready for transmission.
-     * <p>
-     * Builds the complete packet structure:
-     * <pre>
-     * [4 bytes: length] [2 bytes: packet ID] [N bytes: body]
-     * </pre>
+     * Writes the message content to the packet buffer.
+     * Subclasses implement this to serialize their specific message type.
      *
-     * @param message the message DTO to compose
-     * @return the composed PacketBuffer ready for sending
+     * @param packet  The buffer to write to
+     * @param message The message to serialize
+     */
+    protected abstract void write(PacketBuffer packet, T message);
+
+    /**
+     * Composes a complete packet from the message.
+     * Handles the packet structure: [length][header][body]
+     *
+     * @param message The message to compose
+     * @return The composed packet buffer ready for sending
      */
     public PacketBuffer compose(T message) {
         PacketBuffer packet = new PacketBuffer();
-
-        // Write length placeholder (4 bytes)
-        packet.appendInt(0);
-
-        // Write packet ID (2 bytes)
-        packet.appendShort(getPacketId());
-
-        // Write message body
-        write(packet, message);
-
-        // Update length header
-        packet.updateHeaderLength();
-
+        packet.appendInt(0);              // Length placeholder
+        packet.appendShort(getPacketId()); // Header ID
+        write(packet, message);           // Body
+        packet.updateHeaderLength();      // Finalize length
         return packet;
     }
-
-    /**
-     * Writes the message body data to the packet buffer.
-     * <p>
-     * Subclasses implement this to write their specific data format.
-     * The header (length + packet ID) is already written.
-     *
-     * @param packet  the packet buffer to write to
-     * @param message the message DTO containing the data
-     */
-    protected abstract void write(PacketBuffer packet, T message);
 }

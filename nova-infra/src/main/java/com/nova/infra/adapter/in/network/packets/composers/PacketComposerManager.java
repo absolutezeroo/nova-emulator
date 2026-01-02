@@ -5,91 +5,72 @@ import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Registry and manager for packet composers.
- * <p>
- * Maps outgoing message types to their corresponding composers.
- * Handles the composition of typed messages into PacketBuffer packets.
+ * Registry of packet composers by message type.
+ * Routes outgoing messages to the appropriate composer.
  */
 public class PacketComposerManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PacketComposerManager.class);
+    private static final Logger log = LoggerFactory.getLogger(PacketComposerManager.class);
 
-    private final Map<Class<?>, PacketComposer<?>> composers = new ConcurrentHashMap<>();
-
-    public PacketComposerManager() {
-        LOGGER.info("PacketComposerManager initialized");
-    }
+    private final Map<Class<?>, PacketComposer<?>> composers = new HashMap<>();
 
     /**
      * Registers a composer for a specific message type.
      *
-     * @param messageType the message class
-     * @param composer    the composer for that message type
-     * @return this manager for fluent chaining
+     * @param messageType The message class this composer handles
+     * @param composer    The composer to register
+     * @param <T>         The message type
      */
-    public <T extends IOutgoingPacket> PacketComposerManager register(
-            Class<T> messageType,
-            PacketComposer<T> composer) {
-
-        PacketComposer<?> existing = composers.put(messageType, composer);
-
-        if (existing != null) {
-            LOGGER.warn("Replaced existing composer for {}", messageType.getSimpleName());
-        } else {
-            LOGGER.debug("Registered composer for {}: packet ID {}",
-                    messageType.getSimpleName(), composer.getPacketId());
+    public <T extends IOutgoingPacket> void register(Class<T> messageType, PacketComposer<T> composer) {
+        if (composers.containsKey(messageType)) {
+            log.warn("Overwriting composer for message type: {}", messageType.getSimpleName());
         }
-
-        return this;
+        composers.put(messageType, composer);
+        log.debug("Registered composer for message type: {}", messageType.getSimpleName());
     }
 
     /**
-     * Composes a message into a PacketBuffer ready for sending.
+     * Composes a packet from the given message using the registered composer.
      *
-     * @param message the message to compose
-     * @return the composed PacketBuffer
-     * @throws IllegalArgumentException if no composer is registered for the message type
+     * @param message The message to compose
+     * @param <T>     The message type
+     * @return The composed packet buffer, or null if no composer is registered
      */
     @SuppressWarnings("unchecked")
     public <T extends IOutgoingPacket> PacketBuffer compose(T message) {
-        Class<?> messageType = message.getClass();
-        PacketComposer<T> composer = (PacketComposer<T>) composers.get(messageType);
+        PacketComposer<T> composer = (PacketComposer<T>) composers.get(message.getClass());
 
         if (composer == null) {
-            throw new IllegalArgumentException(
-                    "No composer registered for message type: " + messageType.getName());
+            log.error("No composer registered for message type: {}", message.getClass().getSimpleName());
+            return null;
         }
 
-        PacketBuffer packet = composer.compose(message);
-
-        LOGGER.debug("Composed {} (packet ID {}, {} bytes)",
-                messageType.getSimpleName(), composer.getPacketId(), packet.writerIndex());
-
-        return packet;
-    }
-
-    /**
-     * Gets the composer for a specific message type.
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends IOutgoingPacket> Optional<PacketComposer<T>> getComposer(Class<T> messageType) {
-        return Optional.ofNullable((PacketComposer<T>) composers.get(messageType));
+        try {
+            return composer.compose(message);
+        } catch (Exception e) {
+            log.error("Error composing packet for message type: {}", message.getClass().getSimpleName(), e);
+            return null;
+        }
     }
 
     /**
      * Checks if a composer is registered for the given message type.
+     *
+     * @param messageType The message type to check
+     * @return true if a composer is registered
      */
     public boolean hasComposer(Class<?> messageType) {
         return composers.containsKey(messageType);
     }
 
     /**
-     * Gets the count of registered composers.
+     * Returns the number of registered composers.
+     *
+     * @return The composer count
      */
     public int getComposerCount() {
         return composers.size();
