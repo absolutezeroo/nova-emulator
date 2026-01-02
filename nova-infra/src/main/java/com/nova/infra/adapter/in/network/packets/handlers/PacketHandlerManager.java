@@ -63,15 +63,19 @@ public class PacketHandlerManager {
 
         if (handler == null) {
             LOGGER.warn("No handler registered for packet type: {}", packetType.getSimpleName());
+
             return false;
         }
 
         try {
             LOGGER.debug("Dispatching {} to {}", packetType.getSimpleName(), handler.getClass().getSimpleName());
+
             handler.handle(connection, packet);
+
             return true;
         } catch (Exception e) {
             LOGGER.error("Error handling packet {}: {}", packetType.getSimpleName(), e.getMessage(), e);
+
             return false;
         }
     }

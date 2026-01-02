@@ -149,26 +149,38 @@ nova-app/
 
 ## Data Flow
 
-### Authentication Example
+### Authentication Example (SSO Login)
 
 ```
 1. Client connects to GameServer (Netty)
           │
           ▼
-2. PacketHandler receives SSO ticket
+2. GameHandler receives ClientMessage (header ID 2419)
           │
           ▼
-3. Calls UserUseCase.authenticate(ssoTicket)
+3. PacketDispatcher routes to SsoTicketParser
+          │ parses bytes into SsoTicketMessageEvent
+          ▼
+4. PacketDispatcher routes to SsoTicketHandler
           │
           ▼
-4. UserService (implementation) orchestrates:
+5. SsoTicketHandler calls UserUseCase.authenticate(ssoTicket)
+          │
+          ▼
+6. UserService (implementation) orchestrates:
    a. userRepository.findBySsoTicket()  ──▶  MySqlUserRepository (SQL query)
    b. userRepository.invalidateSsoTicket()
    c. user.markOnline()
    d. Returns User entity
           │
           ▼
-5. PacketHandler sends response to client
+7. SsoTicketHandler composes response packets:
+   a. AuthenticatedMessage → AuthenticatedComposer → PacketBuffer
+   b. UserInfoMessage → UserInfoComposer → PacketBuffer
+   c. UserCreditsMessage → UserCreditsComposer → PacketBuffer
+          │
+          ▼
+8. NettyConnection.send() writes ByteBuf to client
 ```
 
 ## Network Layer
@@ -194,16 +206,18 @@ The network layer follows hexagonal principles - the domain defines abstract por
 ┌───────────────────────────────────────────────────────────│─────────────────┐
 │                              nova-infra                   │                 │
 │                                                           │                 │
-│  Binary Packet ──▶ MessageDecoder ──▶ Command DTO ────────┤                 │
-│                                              (to core)    │                 │
+│  Binary Packet ──▶ PacketParser ──▶ IIncomingPacket ──────┤                 │
+│                                          │                │                 │
+│                                          ▼                │                 │
+│                               PacketHandler ──▶ UseCase   │                 │
+│                                          │                │                 │
+│  ┌─────────────────────────┐ ◀───────────┘  ┌─────────────┴─────────────┐   │
+│  │   GameServer            │                │    NettyConnection        │   │
+│  │   implements            │                │    (hides Netty Channel)  │   │
+│  │   GameServerPort        │                │                           │   │
+│  └─────────────────────────┘                └───────────────────────────┘   │
 │                                                           │                 │
-│  ┌─────────────────────────┐              ┌───────────────┴─────────────┐   │
-│  │   GameServer            │              │    NettyConnection          │   │
-│  │   implements            │              │    (hides Netty Channel)    │   │
-│  │   GameServerPort        │              │                             │   │
-│  └─────────────────────────┘              └─────────────────────────────┘   │
-│                                                                             │
-│  Response DTO ◀── MessageEncoder ◀── UseCase result                        │
+│  PacketBuffer ◀── PacketComposer ◀── IOutgoingPacket ◀────┘                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -244,16 +258,20 @@ All Habbo packets follow this binary format:
                               │
                               ▼
                     ┌─────────────────────┐
-                    │     GameHandler     │  Routes to packet handlers
-                    │ (SimpleChannelIn)   │  Based on header ID
-                    └─────────────────────┘
-
-                         Outbound Flow
+                    │     GameHandler     │  Routes to PacketDispatcher
+                    │ (SimpleChannelIn)   │
+                    └──────────┬──────────┘
                               │
                               ▼
                     ┌─────────────────────┐
-                    │  GamePacketEncoder  │  Encodes ServerMessage
-                    │  (MessageToByte)    │  to length+header+body
+                    │   PacketDispatcher  │  Parser → Handler → Response
+                    │                     │  Composes outgoing packets
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │    NettyConnection  │  Writes PacketBuffer.getBuffer()
+                    │    send(ByteBuf)    │  directly to channel
                     └─────────────────────┘
 ```
 
@@ -287,7 +305,14 @@ All Habbo packets follow this binary format:
                               │
                               ▼
                     ┌─────────────────────┐
-                    │  GamePacketEncoder  │  Encodes ServerMessage
+                    │   PacketDispatcher  │  Parser → Handler → Response
+                    │                     │  Composes outgoing packets
+                    └──────────┬──────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │    NettyConnection  │  Wraps ByteBuf in
+                    │  send(BinaryFrame)  │  BinaryWebSocketFrame
                     └─────────────────────┘
 ```
 
@@ -301,6 +326,71 @@ When a Flash client connects, it first sends `<policy-file-request/>`. The serve
 <cross-domain-policy>
 <allow-access-from domain="*" to-ports="1-31111" />
 </cross-domain-policy>
+```
+
+## Packet System
+
+The packet handling system follows the Uriel architecture pattern, adapted for Hexagonal Architecture.
+
+### Components
+
+| Component | Responsibility |
+|-----------|----------------|
+| `PacketParser<T>` | Converts raw bytes (ClientMessage) → typed event (IIncomingPacket) |
+| `PacketHandler<T>` | Processes events, calls domain use cases, sends responses |
+| `PacketComposer<T>` | Serializes messages (IOutgoingPacket) → PacketBuffer |
+| `PacketBuffer` | Low-level buffer for packet serialization |
+| `PacketDispatcher` | Routes packets through parsers → handlers |
+
+### Flow Diagram
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  ClientMessage  │────▶│  PacketParser   │────▶│ IIncomingPacket │
+│  (headerId,body)│     │  (per headerID) │     │   (typed DTO)   │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                                                         ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   PacketBuffer  │◀────│ PacketComposer  │◀────│  PacketHandler  │
+│    (ByteBuf)    │     │  (per msgType)  │     │  → Use Cases    │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
+
+### Adding New Packets
+
+**Incoming packet (client → server):**
+1. Create event class implementing `IIncomingPacket` in `packets/incoming/`
+2. Create parser extending `PacketParser<T>` in `packets/parsers/`
+3. Create handler extending `PacketHandler<T>` in `packets/handlers/`
+4. Register in `InfrastructureModule`
+
+**Outgoing packet (server → client):**
+1. Create message class implementing `IOutgoingPacket` in `packets/outgoing/`
+2. Create composer extending `PacketComposer<T>` in `packets/composers/`
+3. Register in `InfrastructureModule`
+
+### Example: SSO Authentication
+
+```
+packets/
+├── headers/
+│   ├── Incoming.java           # SSO_TICKET = 2419
+│   └── Outgoing.java           # AUTHENTICATED = 2491, USER_INFO = 3578, USER_CREDITS = 3475
+├── parsers/handshake/
+│   └── SsoTicketParser.java    # Parses SSO ticket string
+├── handlers/handshake/
+│   └── SsoTicketHandler.java   # Authenticates user, sends responses
+├── composers/handshake/
+│   └── AuthenticatedComposer.java
+├── composers/users/
+│   ├── UserInfoComposer.java
+│   └── UserCreditsComposer.java
+├── incoming/handshake/
+│   └── SsoTicketMessageEvent.java
+└── outgoing/
+    ├── handshake/AuthenticatedMessage.java
+    └── users/UserInfoMessage.java, UserCreditsMessage.java
 ```
 
 ## Dependency Injection

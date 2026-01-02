@@ -62,7 +62,9 @@ public class GameHandler extends SimpleChannelInboundHandler<ClientMessage> {
 
         if (connection == null) {
             LOGGER.error("No connection found for channel, dropping packet");
+
             msg.release();
+
             return;
         }
 

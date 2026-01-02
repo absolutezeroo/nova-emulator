@@ -51,18 +51,21 @@ public class PolicyFileHandler extends ByteToMessageDecoder {
             // Send the policy response and close the connection
             ctx.writeAndFlush(Unpooled.copiedBuffer(CROSS_DOMAIN_POLICY, CharsetUtil.UTF_8))
                     .addListener(ChannelFutureListener.CLOSE);
+
             return;
         }
 
         // Not a policy request - remove this handler from the pipeline
         // and let other handlers process the data
         ctx.pipeline().remove(this);
+
         in.resetReaderIndex();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         LOGGER.error("Error in policy file handler: {}", cause.getMessage());
+
         ctx.close();
     }
 }

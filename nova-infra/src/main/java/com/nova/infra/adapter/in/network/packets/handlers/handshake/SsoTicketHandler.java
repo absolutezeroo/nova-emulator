@@ -46,7 +46,7 @@ public class SsoTicketHandler implements PacketHandler<SsoTicketMessageEvent> {
         // Create domain command
         AuthenticateCommand command = new AuthenticateCommand(packet.ssoTicket());
 
-        // Invoke domain use case
+        // Invoke a domain use case
         AuthenticationResult result = userUseCase.authenticate(command);
 
         // Handle result using pattern matching (Java 21)
