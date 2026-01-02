@@ -438,7 +438,40 @@ Repositories abstract data access. The domain defines interfaces, infrastructure
 3. **Define repository port** in `nova-core/domain/port/out/` (e.g., `RoomRepository`)
 4. **Implement use case** in `nova-app/service/` (e.g., `RoomService`)
 5. **Implement adapter** in `nova-infra/adapter/out/` (e.g., `MySqlRoomRepository`)
-6. **Wire in Guice modules**
+6. **Add packet handlers** in `nova-infra/adapter/in/network/packets/`
+7. **Wire in Guice modules**
+
+### Adding New Packets
+
+See the [Packet System](#packet-system) section for detailed instructions. Quick summary:
+
+```java
+// 1. Parser (incoming)
+public class MyPacketParser extends PacketParser<MyEvent> {
+    public int getHeaderId() { return Incoming.MY_PACKET; }
+    public MyEvent parse(ClientMessage msg) { return new MyEvent(msg.readString()); }
+}
+
+// 2. Handler (business logic)
+public class MyHandler extends PacketHandler<MyEvent> {
+    public void handle(NetworkConnection conn, MyEvent event) {
+        // Call use case, compose response
+    }
+}
+
+// 3. Composer (outgoing)
+public class MyComposer extends PacketComposer<MyResponse> {
+    public int getPacketId() { return Outgoing.MY_RESPONSE; }
+    protected void write(PacketBuffer packet, MyResponse msg) {
+        packet.appendString(msg.data());
+    }
+}
+
+// 4. Register in InfrastructureModule
+parserManager.register(new MyPacketParser());
+handlerManager.register(MyEvent.class, new MyHandler(...));
+composerManager.register(MyResponse.class, new MyComposer());
+```
 
 ### Adding New Adapters
 
