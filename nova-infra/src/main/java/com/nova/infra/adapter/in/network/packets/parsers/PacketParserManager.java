@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class PacketParserManager {
 
-    private static final Logger log = LoggerFactory.getLogger(PacketParserManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PacketParserManager.class);
 
     private final Map<Integer, PacketParser<?>> parsers = new HashMap<>();
 
@@ -25,11 +25,12 @@ public class PacketParserManager {
      */
     public void register(PacketParser<?> parser) {
         int headerId = parser.getHeaderId();
+
         if (parsers.containsKey(headerId)) {
-            log.warn("Overwriting parser for header ID: {}", headerId);
+            LOGGER.warn("Overwriting parser for header ID: {}", headerId);
         }
+
         parsers.put(headerId, parser);
-        log.debug("Registered parser for header ID: {}", headerId);
     }
 
     /**
@@ -40,17 +41,20 @@ public class PacketParserManager {
      */
     public IIncomingPacket parse(ClientMessage message) {
         int headerId = message.headerId();
+
         PacketParser<?> parser = parsers.get(headerId);
 
         if (parser == null) {
-            log.debug("No parser registered for header ID: {}", headerId);
+            LOGGER.debug("No parser registered for header ID: {}", headerId);
+
             return null;
         }
 
         try {
             return parser.parse(message);
         } catch (Exception e) {
-            log.error("Error parsing packet with header ID: {}", headerId, e);
+            LOGGER.error("Error parsing packet with header ID: {}", headerId, e);
+
             return null;
         }
     }

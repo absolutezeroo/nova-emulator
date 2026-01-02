@@ -66,6 +66,7 @@ public class UserService implements UserUseCase {
     @Deprecated(forRemoval = true)
     public Optional<User> authenticate(String ssoTicket) {
         AuthenticationResult result = authenticate(new AuthenticateCommand(ssoTicket));
+
         return result.getUser();
     }
 

@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class PacketComposerManager {
 
-    private static final Logger log = LoggerFactory.getLogger(PacketComposerManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PacketComposerManager.class);
 
     private final Map<Class<?>, PacketComposer<?>> composers = new HashMap<>();
 
@@ -27,10 +27,10 @@ public class PacketComposerManager {
      */
     public <T extends IOutgoingPacket> void register(Class<T> messageType, PacketComposer<T> composer) {
         if (composers.containsKey(messageType)) {
-            log.warn("Overwriting composer for message type: {}", messageType.getSimpleName());
+            LOGGER.warn("Overwriting composer for message type: {}", messageType.getSimpleName());
         }
+
         composers.put(messageType, composer);
-        log.debug("Registered composer for message type: {}", messageType.getSimpleName());
     }
 
     /**
@@ -45,14 +45,16 @@ public class PacketComposerManager {
         PacketComposer<T> composer = (PacketComposer<T>) composers.get(message.getClass());
 
         if (composer == null) {
-            log.error("No composer registered for message type: {}", message.getClass().getSimpleName());
+            LOGGER.error("No composer registered for message type: {}", message.getClass().getSimpleName());
+
             return null;
         }
 
         try {
             return composer.compose(message);
         } catch (Exception e) {
-            log.error("Error composing packet for message type: {}", message.getClass().getSimpleName(), e);
+            LOGGER.error("Error composing packet for message type: {}", message.getClass().getSimpleName(), e);
+
             return null;
         }
     }

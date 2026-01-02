@@ -8,17 +8,11 @@ import com.nova.core.domain.port.out.SessionRepository;
 import com.nova.core.domain.port.out.UserRepository;
 import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
 import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;
-import com.nova.infra.adapter.in.network.packets.composers.handshake.AuthenticatedComposer;
-import com.nova.infra.adapter.in.network.packets.composers.user.UserCreditsComposer;
-import com.nova.infra.adapter.in.network.packets.composers.user.UserInfoComposer;
+import com.nova.infra.adapter.in.network.packets.PacketRegistry;
 import com.nova.infra.adapter.in.network.packets.handlers.PacketHandlerManager;
 import com.nova.infra.adapter.in.network.packets.handlers.handshake.SsoTicketHandler;
 import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
-import com.nova.infra.adapter.in.network.packets.outgoing.handshake.AuthenticatedMessage;
-import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCreditsMessage;
-import com.nova.infra.adapter.in.network.packets.outgoing.user.UserInfoMessage;
 import com.nova.infra.adapter.in.network.packets.parsers.PacketParserManager;
-import com.nova.infra.adapter.in.network.packets.parsers.handshake.SSOTicketParser;
 import com.nova.infra.adapter.in.network.server.GameChannelInitializer;
 import com.nova.infra.adapter.in.network.server.GameServer;
 import com.nova.infra.adapter.in.network.websocket.WebSocketChannelInitializer;
@@ -76,8 +70,7 @@ public class InfrastructureModule extends AbstractModule {
     public PacketParserManager provideParserManager() {
         PacketParserManager manager = new PacketParserManager();
 
-        // Register parsers
-        manager.register(new SSOTicketParser());
+        PacketRegistry.registerParsers(manager);
 
         return manager;
     }
@@ -87,10 +80,7 @@ public class InfrastructureModule extends AbstractModule {
     public PacketComposerManager provideComposerManager() {
         PacketComposerManager manager = new PacketComposerManager();
 
-        // Register composers
-        manager.register(AuthenticatedMessage.class, new AuthenticatedComposer());
-        manager.register(UserInfoMessage.class, new UserInfoComposer());
-        manager.register(UserCreditsMessage.class, new UserCreditsComposer());
+        PacketRegistry.registerComposers(manager);
 
         return manager;
     }
@@ -115,7 +105,6 @@ public class InfrastructureModule extends AbstractModule {
             PacketParserManager parserManager,
             PacketHandlerManager handlerManager,
             PacketComposerManager composerManager) {
-
         return new PacketDispatcher(parserManager, handlerManager, composerManager);
     }
 
@@ -125,6 +114,7 @@ public class InfrastructureModule extends AbstractModule {
     @Singleton
     public GameServer provideGameServer(PacketDispatcher packetDispatcher) {
         GameChannelInitializer initializer = new GameChannelInitializer(packetDispatcher);
+
         return new GameServer(GAME_HOST, GAME_PORT, initializer);
     }
 
@@ -132,6 +122,7 @@ public class InfrastructureModule extends AbstractModule {
     @Singleton
     public WebSocketGameServer provideWebSocketGameServer(PacketDispatcher packetDispatcher) {
         WebSocketChannelInitializer initializer = new WebSocketChannelInitializer(packetDispatcher);
+
         return new WebSocketGameServer(GAME_HOST, WEBSOCKET_PORT, initializer);
     }
 }
