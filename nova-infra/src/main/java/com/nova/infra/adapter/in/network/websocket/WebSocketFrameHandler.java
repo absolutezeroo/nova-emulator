@@ -109,7 +109,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
 
             if (!handled) {
                 LOGGER.debug("Unhandled packet ID {} from {}",
-                        message.getHeaderId(), connection.getIpAddress());
+                        message.headerId(), connection.getIpAddress());
             }
         } finally {
             message.release();

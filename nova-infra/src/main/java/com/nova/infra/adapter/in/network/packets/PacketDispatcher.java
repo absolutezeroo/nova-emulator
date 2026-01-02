@@ -55,10 +55,11 @@ public class PacketDispatcher {
      * @return true if the message was successfully processed
      */
     public boolean dispatch(NetworkConnection connection, ClientMessage message) {
-        int packetId = message.getHeaderId();
+        int packetId = message.headerId();
 
         // Parse the message
-        Optional<IIncomingPacket> packetOpt = parserManager.parse(connection, message);
+        IIncomingPacket parsed = parserManager.parse(message);
+        Optional<IIncomingPacket> packetOpt = Optional.ofNullable(parsed);
 
         if (packetOpt.isEmpty()) {
             LOGGER.debug("No parser for packet ID {} from {}", packetId, connection.getIpAddress());

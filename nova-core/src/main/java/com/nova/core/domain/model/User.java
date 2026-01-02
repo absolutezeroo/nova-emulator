@@ -62,18 +62,27 @@ public class User {
 
     // Getters (no setters - modifications through behavior methods)
     public UserId getId() { return id; }
+
     public String getUsername() { return username; }
+
     public String getMotto() { return motto; }
+
     public String getFigure() { return figure; }
+
     public int getCredits() { return credits; }
+
     public Instant getCreatedAt() { return createdAt; }
+
     public Instant getLastOnline() { return lastOnline; }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+
         if (o == null || getClass() != o.getClass()) return false;
+
         User user = (User) o;
+
         return Objects.equals(id, user.id);
     }
 

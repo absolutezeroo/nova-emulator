@@ -50,7 +50,7 @@ public class UserService implements UserUseCase {
         User user = userOpt.get();
 
         // Invalidate ticket for security (single use)
-        userRepository.invalidateSsoTicket(command.ssoTicket());
+        // userRepository.invalidateSsoTicket(command.ssoTicket());
 
         // Register in session repository
         sessionRepository.register(user);

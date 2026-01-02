@@ -69,7 +69,7 @@ public class GameHandler extends SimpleChannelInboundHandler<ClientMessage> {
         }
 
         LOGGER.debug("Received packet from {}: headerId={}",
-                connection.getIpAddress(), msg.getHeaderId());
+                connection.getIpAddress(), msg.headerId());
 
         try {
             // Dispatch packet through parser → handler chain
@@ -77,7 +77,7 @@ public class GameHandler extends SimpleChannelInboundHandler<ClientMessage> {
 
             if (!handled) {
                 LOGGER.debug("Unhandled packet ID {} from {}",
-                        msg.getHeaderId(), connection.getIpAddress());
+                        msg.headerId(), connection.getIpAddress());
             }
         } finally {
             // Always release the message buffer

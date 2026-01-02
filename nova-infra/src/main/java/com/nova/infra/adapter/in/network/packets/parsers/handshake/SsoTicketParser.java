@@ -6,18 +6,18 @@ import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
 
 /**
- * Parses the SSOTicket packet from client.
+ * Parses SSOTicket packet from client.
  */
 public class SSOTicketParser extends PacketParser<SSOTicketMessageEvent> {
 
     @Override
     public int getHeaderId() {
-        return Incoming.S_S_O_TICKET;
+        return Incoming.SECURITY_TICKET;
     }
 
     @Override
     public SSOTicketMessageEvent parse(ClientMessage message) {
-        // No fields to parse
-        return new SSOTicketMessageEvent();
+        String ssoTicket = message.readString();
+        return new SSOTicketMessageEvent(ssoTicket);
     }
 }

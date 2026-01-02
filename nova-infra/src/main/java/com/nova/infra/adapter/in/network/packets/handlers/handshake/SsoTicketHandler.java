@@ -7,10 +7,10 @@ import com.nova.core.domain.port.in.UserUseCase;
 import com.nova.core.domain.port.out.network.NetworkConnection;
 import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;
 import com.nova.infra.adapter.in.network.packets.handlers.PacketHandler;
-import com.nova.infra.adapter.in.network.packets.incoming.handshake.SsoTicketMessageEvent;
+import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
 import com.nova.infra.adapter.in.network.packets.outgoing.handshake.AuthenticatedMessage;
-import com.nova.infra.adapter.in.network.packets.outgoing.users.UserCreditsMessage;
-import com.nova.infra.adapter.in.network.packets.outgoing.users.UserInfoMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCreditsMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.UserInfoMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * Following Hexagonal Architecture, this handler is the adapter that
  * translates between infrastructure (packets) and domain (use cases).
  */
-public class SsoTicketHandler implements PacketHandler<SsoTicketMessageEvent> {
+public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SsoTicketHandler.class);
 
@@ -39,7 +39,7 @@ public class SsoTicketHandler implements PacketHandler<SsoTicketMessageEvent> {
     }
 
     @Override
-    public void handle(NetworkConnection connection, SsoTicketMessageEvent packet) {
+    public void handle(NetworkConnection connection, SSOTicketMessageEvent packet) {
         LOGGER.debug("SSO login attempt from {} with ticket length {}",
                 connection.getIpAddress(), packet.ssoTicket().length());
 
@@ -65,7 +65,7 @@ public class SsoTicketHandler implements PacketHandler<SsoTicketMessageEvent> {
         connection.setAttribute("userId", user.getId());
 
         // Send AuthOK
-        connection.send(composerManager.compose(AuthenticatedMessage.INSTANCE).getBuffer());
+        connection.send(composerManager.compose(new AuthenticatedMessage()).getBuffer());
 
         // Send user info
         UserInfoMessage userInfo = new UserInfoMessage(
@@ -87,7 +87,7 @@ public class SsoTicketHandler implements PacketHandler<SsoTicketMessageEvent> {
         connection.send(composerManager.compose(userInfo).getBuffer());
 
         // Send credits
-        UserCreditsMessage credits = UserCreditsMessage.of(user.getCredits());
+        UserCreditsMessage credits = new UserCreditsMessage(String.valueOf(user.getCredits()));
         connection.send(composerManager.compose(credits).getBuffer());
     }
 

@@ -8,23 +8,7 @@ import java.nio.charset.StandardCharsets;
  * Represents a decoded client packet.
  * Contains the packet header (ID) and the message body.
  */
-public class ClientMessage {
-
-    private final short headerId;
-    private final ByteBuf body;
-
-    public ClientMessage(short headerId, ByteBuf body) {
-        this.headerId = headerId;
-        this.body = body;
-    }
-
-    public short getHeaderId() {
-        return headerId;
-    }
-
-    public ByteBuf getBody() {
-        return body;
-    }
+public record ClientMessage(short headerId, ByteBuf body) {
 
     public int readInt() {
         return body.readInt();

@@ -16,9 +16,9 @@ public final class Outgoing {
     public static final int ACHIEVEMENT_LIST = 305;
     public static final int ACHIEVEMENT_PROGRESSED = 2107;
     public static final int ACHIEVEMENT_NOTIFICATION = 806;
-    public static final int ACHIEVEMENTRESOLUTIONCOMPLETED = 740;
-    public static final int ACHIEVEMENTRESOLUTIONPROGRESS = 3370;
-    public static final int ACHIEVEMENTRESOLUTIONS = 66;
+    public static final int ACHIEVEMENT_RESOLUTION_COMPLETED = 740;
+    public static final int ACHIEVEMENT_RESOLUTION_PROGRESS = 3370;
+    public static final int ACHIEVEMENT_RESOLUTIONS = 66;
     public static final int USER_ACHIEVEMENT_SCORE = 1968;
 
     // === Advertisement ===

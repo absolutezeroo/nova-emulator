@@ -68,7 +68,7 @@ public class PacketComposerManager {
     }
 
     /**
-     * Returns the number of registered composers.
+     * Returns the Integer of registered composers.
      *
      * @return The composer count
      */

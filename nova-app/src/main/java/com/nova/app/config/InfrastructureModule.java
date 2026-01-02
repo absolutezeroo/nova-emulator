@@ -9,16 +9,16 @@ import com.nova.core.domain.port.out.UserRepository;
 import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
 import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;
 import com.nova.infra.adapter.in.network.packets.composers.handshake.AuthenticatedComposer;
-import com.nova.infra.adapter.in.network.packets.composers.users.UserCreditsComposer;
-import com.nova.infra.adapter.in.network.packets.composers.users.UserInfoComposer;
+import com.nova.infra.adapter.in.network.packets.composers.user.UserCreditsComposer;
+import com.nova.infra.adapter.in.network.packets.composers.user.UserInfoComposer;
 import com.nova.infra.adapter.in.network.packets.handlers.PacketHandlerManager;
 import com.nova.infra.adapter.in.network.packets.handlers.handshake.SsoTicketHandler;
-import com.nova.infra.adapter.in.network.packets.incoming.handshake.SsoTicketMessageEvent;
+import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
 import com.nova.infra.adapter.in.network.packets.outgoing.handshake.AuthenticatedMessage;
-import com.nova.infra.adapter.in.network.packets.outgoing.users.UserCreditsMessage;
-import com.nova.infra.adapter.in.network.packets.outgoing.users.UserInfoMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCreditsMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.UserInfoMessage;
 import com.nova.infra.adapter.in.network.packets.parsers.PacketParserManager;
-import com.nova.infra.adapter.in.network.packets.parsers.handshake.SsoTicketParser;
+import com.nova.infra.adapter.in.network.packets.parsers.handshake.SSOTicketParser;
 import com.nova.infra.adapter.in.network.server.GameChannelInitializer;
 import com.nova.infra.adapter.in.network.server.GameServer;
 import com.nova.infra.adapter.in.network.websocket.WebSocketChannelInitializer;
@@ -77,7 +77,7 @@ public class InfrastructureModule extends AbstractModule {
         PacketParserManager manager = new PacketParserManager();
 
         // Register parsers
-        manager.register(new SsoTicketParser());
+        manager.register(new SSOTicketParser());
 
         return manager;
     }
@@ -104,7 +104,7 @@ public class InfrastructureModule extends AbstractModule {
         PacketHandlerManager manager = new PacketHandlerManager();
 
         // Register handlers
-        manager.register(SsoTicketMessageEvent.class, new SsoTicketHandler(userUseCase, composerManager));
+        manager.register(SSOTicketMessageEvent.class, new SsoTicketHandler(userUseCase, composerManager));
 
         return manager;
     }

@@ -39,7 +39,7 @@ public class PacketParserManager {
      * @return The parsed packet, or null if no parser is registered
      */
     public IIncomingPacket parse(ClientMessage message) {
-        int headerId = message.getHeaderId();
+        int headerId = message.headerId();
         PacketParser<?> parser = parsers.get(headerId);
 
         if (parser == null) {
@@ -66,7 +66,7 @@ public class PacketParserManager {
     }
 
     /**
-     * Returns the number of registered parsers.
+     * Returns the Integer of registered parsers.
      *
      * @return The parser count
      */
