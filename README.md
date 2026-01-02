@@ -54,13 +54,34 @@ nova-emulator/
 │   └── adapter/in/network/
 │       ├── codec/       # Netty codecs (ClientMessage, decoders)
 │       ├── handler/     # Netty handlers (GameHandler, PolicyFileHandler)
-│       ├── packets/     # Packet system (parsers, handlers, composers)
+│       ├── packets/     # Packet system (~1800 files)
+│       │   ├── headers/ # Incoming.java (~470), Outgoing.java (~472)
+│       │   ├── incoming/  # Event records from client (~459)
+│       │   ├── outgoing/  # Message records to client (~447)
+│       │   ├── parsers/   # Parse client bytes → events (~457)
+│       │   ├── composers/ # Compose messages → bytes (~447)
+│       │   └── handlers/  # Business logic handlers
 │       ├── session/     # Connection management (NettyConnection)
 │       ├── server/      # TCP server (GameServer, GameChannelInitializer)
 │       └── websocket/   # WebSocket server
 ├── nova-app/            # Application bootstrap and DI configuration
 └── pom.xml              # Parent POM
 ```
+
+## Packet System
+
+All packets are migrated from Nitro client with complete protocol coverage:
+
+| Component | Count | Description |
+|-----------|-------|-------------|
+| Incoming Headers | ~470 | Client → Server packet IDs |
+| Outgoing Headers | ~472 | Server → Client packet IDs |
+| Parsers | ~457 | Parse client requests |
+| Composers | ~447 | Compose server responses |
+| Event Records | ~459 | Incoming data structures |
+| Message Records | ~447 | Outgoing data structures |
+
+Packets are auto-registered via `PacketRegistry` at startup.
 
 ## Tech Stack
 

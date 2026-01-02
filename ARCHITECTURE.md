@@ -330,7 +330,29 @@ When a Flash client connects, it first sends `<policy-file-request/>`. The serve
 
 ## Packet System
 
-The packet handling system follows the Uriel architecture pattern, adapted for Hexagonal Architecture.
+The packet handling system follows the Uriel architecture pattern, adapted for Hexagonal Architecture. All packets are migrated from the Nitro HTML5 client with complete protocol coverage.
+
+### Packet Statistics
+
+| Component | Count | Description |
+|-----------|-------|-------------|
+| Incoming Headers | ~470 | Client → Server packet IDs (`Incoming.java`) |
+| Outgoing Headers | ~472 | Server → Client packet IDs (`Outgoing.java`) |
+| Parsers | ~457 | Parse client requests |
+| Composers | ~447 | Compose server responses |
+| Event Records | ~459 | Incoming data structures |
+| Message Records | ~447 | Outgoing data structures |
+
+### Naming Convention (Nitro → Nova)
+
+Since Nitro is a client and Nova is a server, perspectives are inverted:
+
+| Nitro (Client) | Nova (Server) | Description |
+|----------------|---------------|-------------|
+| `IncomingHeader.ts` | `Outgoing.java` | Server sends to client |
+| `OutgoingHeader.ts` | `Incoming.java` | Client sends to server |
+| `*MessageEvent.ts` | `*Message.java` | Outgoing message records |
+| `*Composer.ts` | `*MessageEvent.java` | Incoming event records |
 
 ### Components
 
@@ -341,6 +363,7 @@ The packet handling system follows the Uriel architecture pattern, adapted for H
 | `PacketComposer<T>` | Serializes messages (IOutgoingPacket) → PacketBuffer |
 | `PacketBuffer` | Low-level buffer for packet serialization |
 | `PacketDispatcher` | Routes packets through parsers → handlers |
+| `PacketRegistry` | Auto-registers all parsers and composers at startup |
 
 ### Flow Diagram
 
@@ -370,27 +393,64 @@ The packet handling system follows the Uriel architecture pattern, adapted for H
 2. Create composer extending `PacketComposer<T>` in `packets/composers/`
 3. Register in `InfrastructureModule`
 
+### Package Structure
+
+```
+packets/
+├── IIncomingPacket.java              # Marker interface for incoming events
+├── IOutgoingPacket.java              # Marker interface for outgoing messages
+├── PacketDispatcher.java             # Central dispatcher
+├── PacketRegistry.java               # Auto-registration of all packets
+├── headers/
+│   ├── Incoming.java                 # ~470 incoming header IDs (client → server)
+│   └── Outgoing.java                 # ~472 outgoing header IDs (server → client)
+├── incoming/                          # Events from client (~459 records)
+│   ├── handshake/                     # SSOTicketMessageEvent, etc.
+│   ├── room/                          # Room actions (access/, action/, furniture/, etc.)
+│   ├── catalog/                       # Catalog requests
+│   ├── navigator/                     # Navigator requests
+│   └── ...                            # 30+ categories
+├── outgoing/                          # Messages to client (~447 records)
+│   ├── PacketBuffer.java              # Serialization buffer
+│   ├── handshake/                     # AuthenticatedMessage, etc.
+│   ├── room/                          # Room data
+│   ├── user/                          # UserInfoMessage, UserCreditsMessage
+│   └── ...                            # 30+ categories
+├── parsers/                           # Parse client bytes → events (~457)
+│   ├── PacketParser.java              # Abstract base
+│   ├── PacketParserManager.java       # Registry by header ID
+│   └── {category}/                    # One parser per event
+├── composers/                         # Compose messages → bytes (~447)
+│   ├── PacketComposer.java            # Abstract base
+│   ├── PacketComposerManager.java     # Registry by message type
+│   └── {category}/                    # One composer per message
+└── handlers/                          # Business logic handlers
+    ├── PacketHandler.java             # Interface
+    ├── PacketHandlerManager.java      # Registry by event type
+    └── handshake/SsoTicketHandler.java
+```
+
 ### Example: SSO Authentication
 
 ```
 packets/
 ├── headers/
-│   ├── Incoming.java           # SSO_TICKET = 2419
-│   └── Outgoing.java           # AUTHENTICATED = 2491, USER_INFO = 3578, USER_CREDITS = 3475
+│   ├── Incoming.java           # SECURITY_TICKET = 2419
+│   └── Outgoing.java           # AUTHENTICATED = 2491, USER_INFO = 2725, USER_CREDITS = 3475
 ├── parsers/handshake/
-│   └── SsoTicketParser.java    # Parses SSO ticket string
+│   └── SSOTicketParser.java    # Parses SSO ticket string
 ├── handlers/handshake/
 │   └── SsoTicketHandler.java   # Authenticates user, sends responses
 ├── composers/handshake/
 │   └── AuthenticatedComposer.java
-├── composers/users/
+├── composers/user/
 │   ├── UserInfoComposer.java
 │   └── UserCreditsComposer.java
 ├── incoming/handshake/
-│   └── SsoTicketMessageEvent.java
+│   └── SSOTicketMessageEvent.java
 └── outgoing/
     ├── handshake/AuthenticatedMessage.java
-    └── users/UserInfoMessage.java, UserCreditsMessage.java
+    └── user/UserInfoMessage.java, UserCreditsMessage.java
 ```
 
 ## Dependency Injection
@@ -443,34 +503,84 @@ Repositories abstract data access. The domain defines interfaces, infrastructure
 
 ### Adding New Packets
 
-See the [Packet System](#packet-system) section for detailed instructions. Quick summary:
+**Outgoing (server → client):**
+1. Create `outgoing/{category}/MyMessage.java` (record implementing `IOutgoingPacket`)
+2. Create `composers/{category}/MyComposer.java`
+3. Add header constant to `Outgoing.java`
+4. Regenerate registry: `cd packet-migration-script && node generate-registry.js`
+
+**Incoming (client → server):**
+1. Create `incoming/{category}/MyMessageEvent.java` (record implementing `IIncomingPacket`)
+2. Create `parsers/{category}/MyParser.java`
+3. Create `handlers/{category}/MyHandler.java` (if business logic needed)
+4. Add header constant to `Incoming.java`
+5. Regenerate registry: `cd packet-migration-script && node generate-registry.js`
+6. Register handler in `InfrastructureModule` (handlers require manual registration)
+
+**Code Examples:**
 
 ```java
-// 1. Parser (incoming)
-public class MyPacketParser extends PacketParser<MyEvent> {
-    public int getHeaderId() { return Incoming.MY_PACKET; }
-    public MyEvent parse(ClientMessage msg) { return new MyEvent(msg.readString()); }
-}
+// Message record (outgoing - server → client)
+public record UserInfoMessage(
+    int userId,
+    String username,
+    String figure
+) implements IOutgoingPacket {}
 
-// 2. Handler (business logic)
-public class MyHandler extends PacketHandler<MyEvent> {
-    public void handle(NetworkConnection conn, MyEvent event) {
-        // Call use case, compose response
+// Composer (serializes message to bytes)
+public class UserInfoComposer extends PacketComposer<UserInfoMessage> {
+    @Override
+    public int getPacketId() { return Outgoing.USER_INFO; }
+
+    @Override
+    protected void write(PacketBuffer packet, UserInfoMessage msg) {
+        packet.appendInt(msg.userId());
+        packet.appendString(msg.username());
+        packet.appendString(msg.figure());
     }
 }
 
-// 3. Composer (outgoing)
-public class MyComposer extends PacketComposer<MyResponse> {
-    public int getPacketId() { return Outgoing.MY_RESPONSE; }
-    protected void write(PacketBuffer packet, MyResponse msg) {
-        packet.appendString(msg.data());
+// Event record (incoming - client → server)
+public record SSOTicketMessageEvent(
+    String ssoTicket
+) implements IIncomingPacket {}
+
+// Parser (parses bytes to event)
+public class SSOTicketParser extends PacketParser<SSOTicketMessageEvent> {
+    @Override
+    public int getHeaderId() { return Incoming.SECURITY_TICKET; }
+
+    @Override
+    public SSOTicketMessageEvent parse(ClientMessage message) {
+        return new SSOTicketMessageEvent(message.readString());
     }
 }
 
-// 4. Register in InfrastructureModule
-parserManager.register(new MyPacketParser());
-handlerManager.register(MyEvent.class, new MyHandler(...));
-composerManager.register(MyResponse.class, new MyComposer());
+// Handler (business logic - calls domain use cases)
+public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
+    private final UserUseCase userUseCase;
+    private final PacketComposerManager composerManager;
+
+    @Override
+    public void handle(NetworkConnection connection, SSOTicketMessageEvent packet) {
+        AuthenticationResult result = userUseCase.authenticate(...);
+        connection.send(composerManager.compose(new AuthenticatedMessage()).getBuffer());
+    }
+}
+```
+
+**Packet Registration:**
+
+Parsers and composers are auto-registered via `PacketRegistry`:
+```java
+// In InfrastructureModule
+PacketRegistry.registerParsers(parserManager);   // 457 parsers
+PacketRegistry.registerComposers(composerManager); // 447 composers
+```
+
+Handlers require manual registration:
+```java
+manager.register(SSOTicketMessageEvent.class, new SsoTicketHandler(userUseCase, composerManager));
 ```
 
 ### Adding New Adapters
