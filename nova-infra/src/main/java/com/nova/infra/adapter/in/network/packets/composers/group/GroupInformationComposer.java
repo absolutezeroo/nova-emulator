@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.group.GroupInformationMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes GroupInformation packet for client.
  */
+@ComposesPacket(Outgoing.GROUP_INFO)
 public class GroupInformationComposer extends PacketComposer<GroupInformationMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.GROUP_INFO;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, GroupInformationMessage message) {
         packet.appendInt(message.id());
         packet.appendInt(message.type());

@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.help.SanctionStatusMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes SanctionStatus packet for client.
  */
+@ComposesPacket(Outgoing.CFH_SANCTION_STATUS)
 public class SanctionStatusComposer extends PacketComposer<SanctionStatusMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.CFH_SANCTION_STATUS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, SanctionStatusMessage message) {
         packet.appendBoolean(message.isSanctionNew());
         packet.appendBoolean(message.isSanctionActive());

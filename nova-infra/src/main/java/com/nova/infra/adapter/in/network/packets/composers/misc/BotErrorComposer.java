@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.BotErrorMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes BotError packet for client.
  */
+@ComposesPacket(Outgoing.BOT_ERROR)
 public class BotErrorComposer extends PacketComposer<BotErrorMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.BOT_ERROR;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, BotErrorMessage message) {
         packet.appendInt(message.errorCode());
     }

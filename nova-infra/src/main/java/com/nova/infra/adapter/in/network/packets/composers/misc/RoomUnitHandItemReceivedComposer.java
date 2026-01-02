@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.RoomUnitHandItemReceivedMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RoomUnitHandItemReceived packet for client.
  */
+@ComposesPacket(Outgoing.HAND_ITEM_RECEIVED)
 public class RoomUnitHandItemReceivedComposer extends PacketComposer<RoomUnitHandItemReceivedMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.HAND_ITEM_RECEIVED;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RoomUnitHandItemReceivedMessage message) {
         packet.appendInt(message.giverUserId());
         packet.appendInt(message.handItemType());

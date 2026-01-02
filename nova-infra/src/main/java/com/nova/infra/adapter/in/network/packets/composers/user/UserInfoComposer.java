@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserInfoMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes UserInfo packet for client.
  */
+@ComposesPacket(Outgoing.USER_INFO)
 public class UserInfoComposer extends PacketComposer<UserInfoMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.USER_INFO;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, UserInfoMessage message) {
         packet.appendInt(message.userId());
         packet.appendString(message.username());

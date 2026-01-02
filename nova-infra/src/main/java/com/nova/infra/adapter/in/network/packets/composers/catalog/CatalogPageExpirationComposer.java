@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.catalog.CatalogPageExpirationMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes CatalogPageExpiration packet for client.
  */
+@ComposesPacket(Outgoing.CATALOG_PAGE_EXPIRATION)
 public class CatalogPageExpirationComposer extends PacketComposer<CatalogPageExpirationMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.CATALOG_PAGE_EXPIRATION;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, CatalogPageExpirationMessage message) {
         packet.appendInt(message.pageId());
         packet.appendString(message.pageName());

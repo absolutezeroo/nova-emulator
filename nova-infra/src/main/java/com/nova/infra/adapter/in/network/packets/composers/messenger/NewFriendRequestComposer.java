@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.messenger.NewFriendRequestMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes NewFriendRequest packet for client.
  */
+@ComposesPacket(Outgoing.MESSENGER_REQUEST)
 public class NewFriendRequestComposer extends PacketComposer<NewFriendRequestMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.MESSENGER_REQUEST;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, NewFriendRequestMessage message) {
         // No fields to write
     }

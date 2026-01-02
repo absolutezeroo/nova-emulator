@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.TargetedOfferNotFoundMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes TargetedOfferNotFound packet for client.
  */
+@ComposesPacket(Outgoing.TARGET_OFFER_NOT_FOUND)
 public class TargetedOfferNotFoundComposer extends PacketComposer<TargetedOfferNotFoundMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.TARGET_OFFER_NOT_FOUND;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, TargetedOfferNotFoundMessage message) {
         // No fields to write
     }

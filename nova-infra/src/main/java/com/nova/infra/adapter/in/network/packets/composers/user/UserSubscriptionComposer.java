@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserSubscriptionMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes UserSubscription packet for client.
  */
+@ComposesPacket(Outgoing.USER_SUBSCRIPTION)
 public class UserSubscriptionComposer extends PacketComposer<UserSubscriptionMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.USER_SUBSCRIPTION;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, UserSubscriptionMessage message) {
         packet.appendString(message.productName());
         packet.appendInt(message.daysToPeriodEnd());

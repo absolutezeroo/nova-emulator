@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.achievement.AchievementResolutionsMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes AchievementResolutions packet for client.
  */
+@ComposesPacket(Outgoing.ACHIEVEMENT_RESOLUTIONS)
 public class AchievementResolutionsComposer extends PacketComposer<AchievementResolutionsMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.ACHIEVEMENT_RESOLUTIONS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, AchievementResolutionsMessage message) {
         packet.appendInt(message.stuffId());
     }

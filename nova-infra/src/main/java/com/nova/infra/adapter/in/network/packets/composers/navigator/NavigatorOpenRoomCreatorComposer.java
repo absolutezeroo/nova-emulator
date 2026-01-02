@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.navigator.NavigatorOpenRoomCreatorMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes NavigatorOpenRoomCreator packet for client.
  */
+@ComposesPacket(Outgoing.NAVIGATOR_OPEN_ROOM_CREATOR)
 public class NavigatorOpenRoomCreatorComposer extends PacketComposer<NavigatorOpenRoomCreatorMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.NAVIGATOR_OPEN_ROOM_CREATOR;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, NavigatorOpenRoomCreatorMessage message) {
         // No fields to write
     }

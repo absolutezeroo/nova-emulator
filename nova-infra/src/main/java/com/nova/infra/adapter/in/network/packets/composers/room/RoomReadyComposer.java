@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.room.RoomReadyMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RoomReady packet for client.
  */
+@ComposesPacket(Outgoing.ROOM_MODEL_NAME)
 public class RoomReadyComposer extends PacketComposer<RoomReadyMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.ROOM_MODEL_NAME;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RoomReadyMessage message) {
         packet.appendString(message.name());
         packet.appendInt(message.roomId());

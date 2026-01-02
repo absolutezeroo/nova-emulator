@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.CommunityGoalHallOfFameMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes CommunityGoalHallOfFame packet for client.
  */
+@ComposesPacket(Outgoing.COMMUNITY_GOAL_HALL_OF_FAME)
 public class CommunityGoalHallOfFameComposer extends PacketComposer<CommunityGoalHallOfFameMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.COMMUNITY_GOAL_HALL_OF_FAME;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, CommunityGoalHallOfFameMessage message) {
         // No fields to write
     }

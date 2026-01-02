@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.misc.GetPopularRoomTagsMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses GetPopularRoomTags packet from client.
  */
+@ParsesPacket(Incoming.GET_POPULAR_ROOM_TAGS)
 public class GetPopularRoomTagsParser extends PacketParser<GetPopularRoomTagsMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.GET_POPULAR_ROOM_TAGS;
-    }
-
-    @Override
+@Override
     public GetPopularRoomTagsMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new GetPopularRoomTagsMessageEvent();

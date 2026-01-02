@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.misc.OpenCampaignCalendarDoorAsStaffMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses OpenCampaignCalendarDoorAsStaff packet from client.
  */
+@ParsesPacket(Incoming.OPEN_CAMPAIGN_CALENDAR_DOOR_STAFF)
 public class OpenCampaignCalendarDoorAsStaffParser extends PacketParser<OpenCampaignCalendarDoorAsStaffMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.OPEN_CAMPAIGN_CALENDAR_DOOR_STAFF;
-    }
-
-    @Override
+@Override
     public OpenCampaignCalendarDoorAsStaffMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new OpenCampaignCalendarDoorAsStaffMessageEvent();

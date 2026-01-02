@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.competition.CompetitionVotingInfoMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes CompetitionVotingInfo packet for client.
  */
+@ComposesPacket(Outgoing.COMPETITION_VOTING_INFO)
 public class CompetitionVotingInfoComposer extends PacketComposer<CompetitionVotingInfoMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.COMPETITION_VOTING_INFO;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, CompetitionVotingInfoMessage message) {
         packet.appendInt(message.goalId());
         packet.appendString(message.goalCode());

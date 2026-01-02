@@ -1,10 +1,12 @@
 package com.nova.infra.adapter.in.network.packets.handlers.handshake;
 
+import com.google.inject.Inject;
 import com.nova.core.application.command.AuthenticateCommand;
 import com.nova.core.application.result.AuthenticationResult;
 import com.nova.core.domain.model.User;
 import com.nova.core.domain.port.in.UserUseCase;
 import com.nova.core.domain.port.out.network.NetworkConnection;
+import com.nova.infra.adapter.in.network.packets.annotations.HandlesPacket;
 import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;
 import com.nova.infra.adapter.in.network.packets.handlers.PacketHandler;
 import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * Following Hexagonal Architecture, this handler is the adapter that
  * translates between infrastructure (packets) and domain (use cases).
  */
+@HandlesPacket(SSOTicketMessageEvent.class)
 public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SsoTicketHandler.class);
@@ -33,6 +36,7 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
     private final UserUseCase userUseCase;
     private final PacketComposerManager composerManager;
 
+    @Inject
     public SsoTicketHandler(UserUseCase userUseCase, PacketComposerManager composerManager) {
         this.userUseCase = userUseCase;
         this.composerManager = composerManager;

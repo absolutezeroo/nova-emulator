@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.catalog.PurchaseOKMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes PurchaseOK packet for client.
  */
+@ComposesPacket(Outgoing.CATALOG_PURCHASE_OK)
 public class PurchaseOKComposer extends PacketComposer<PurchaseOKMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.CATALOG_PURCHASE_OK;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, PurchaseOKMessage message) {
         packet.appendInt(message.offerId());
         packet.appendString(message.localizationId());

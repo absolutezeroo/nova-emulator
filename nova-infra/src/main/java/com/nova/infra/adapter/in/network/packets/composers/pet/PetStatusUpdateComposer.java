@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.pet.PetStatusUpdateMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes PetStatusUpdate packet for client.
  */
+@ComposesPacket(Outgoing.PET_STATUS)
 public class PetStatusUpdateComposer extends PacketComposer<PetStatusUpdateMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.PET_STATUS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, PetStatusUpdateMessage message) {
         packet.appendInt(message.roomIndex());
         packet.appendInt(message.petId());

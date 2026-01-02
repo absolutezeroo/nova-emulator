@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.misc.MyGuildBasesSearchMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses MyGuildBasesSearch packet from client.
  */
+@ParsesPacket(Incoming.MY_GUILD_BASES_SEARCH)
 public class MyGuildBasesSearchParser extends PacketParser<MyGuildBasesSearchMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.MY_GUILD_BASES_SEARCH;
-    }
-
-    @Override
+@Override
     public MyGuildBasesSearchMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new MyGuildBasesSearchMessageEvent();

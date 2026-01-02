@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.LoadGameMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes LoadGame packet for client.
  */
+@ComposesPacket(Outgoing.LOADGAME)
 public class LoadGameComposer extends PacketComposer<LoadGameMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.LOADGAME;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, LoadGameMessage message) {
         packet.appendInt(message.gameTypeId());
         packet.appendString(message.gameClientId());

@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCreditsMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes UserCredits packet for client.
  */
+@ComposesPacket(Outgoing.USER_CREDITS)
 public class UserCreditsComposer extends PacketComposer<UserCreditsMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.USER_CREDITS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, UserCreditsMessage message) {
         packet.appendString(message.credits());
     }

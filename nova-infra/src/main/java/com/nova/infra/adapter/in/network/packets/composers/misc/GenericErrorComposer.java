@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.GenericErrorMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes GenericError packet for client.
  */
+@ComposesPacket(Outgoing.GENERIC_ERROR)
 public class GenericErrorComposer extends PacketComposer<GenericErrorMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.GENERIC_ERROR;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, GenericErrorMessage message) {
         packet.appendInt(message.errorCode());
     }

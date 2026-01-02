@@ -57,6 +57,12 @@
             <artifactId>gson</artifactId>
         </dependency>
 
+        <!-- Classpath Scanning (for packet annotations) -->
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.mockito</groupId>

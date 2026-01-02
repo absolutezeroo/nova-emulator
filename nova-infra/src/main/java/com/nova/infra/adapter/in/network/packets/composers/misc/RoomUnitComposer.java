@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.RoomUnitMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RoomUnit packet for client.
  */
+@ComposesPacket(Outgoing.UNIT)
 public class RoomUnitComposer extends PacketComposer<RoomUnitMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.UNIT;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RoomUnitMessage message) {
         packet.appendInt(message.roomIndex());
         packet.appendString(message.message());

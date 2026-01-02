@@ -1,17 +1,15 @@
 package com.nova.app.config;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.nova.core.domain.port.in.UserUseCase;
 import com.nova.core.domain.port.out.SessionRepository;
 import com.nova.core.domain.port.out.UserRepository;
 import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
+import com.nova.infra.adapter.in.network.packets.annotations.PacketScanner;
 import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;
-import com.nova.infra.adapter.in.network.packets.PacketRegistry;
 import com.nova.infra.adapter.in.network.packets.handlers.PacketHandlerManager;
-import com.nova.infra.adapter.in.network.packets.handlers.handshake.SsoTicketHandler;
-import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
 import com.nova.infra.adapter.in.network.packets.parsers.PacketParserManager;
 import com.nova.infra.adapter.in.network.server.GameChannelInitializer;
 import com.nova.infra.adapter.in.network.server.GameServer;
@@ -70,7 +68,8 @@ public class InfrastructureModule extends AbstractModule {
     public PacketParserManager provideParserManager() {
         PacketParserManager manager = new PacketParserManager();
 
-        PacketRegistry.registerParsers(manager);
+        // Auto-discover and register all @ParsesPacket annotated parsers
+        PacketScanner.registerParsers(manager);
 
         return manager;
     }
@@ -80,21 +79,20 @@ public class InfrastructureModule extends AbstractModule {
     public PacketComposerManager provideComposerManager() {
         PacketComposerManager manager = new PacketComposerManager();
 
-        PacketRegistry.registerComposers(manager);
+        // Auto-discover and register all @ComposesPacket annotated composers
+        PacketScanner.registerComposers(manager);
 
         return manager;
     }
 
     @Provides
     @Singleton
-    public PacketHandlerManager provideHandlerManager(
-            UserUseCase userUseCase,
-            PacketComposerManager composerManager) {
-
+    public PacketHandlerManager provideHandlerManager(Injector injector) {
         PacketHandlerManager manager = new PacketHandlerManager();
 
-        // Register handlers
-        manager.register(SSOTicketMessageEvent.class, new SsoTicketHandler(userUseCase, composerManager));
+        // Auto-discover and register all @HandlesPacket annotated handlers
+        // Handlers are instantiated via Guice for dependency injection
+        PacketScanner.registerHandlers(manager, injector);
 
         return manager;
     }

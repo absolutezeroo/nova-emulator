@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.room.UpdateRoomFilterMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses UpdateRoomFilter packet from client.
  */
+@ParsesPacket(Incoming.ROOM_FILTER_WORDS_MODIFY)
 public class UpdateRoomFilterParser extends PacketParser<UpdateRoomFilterMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.ROOM_FILTER_WORDS_MODIFY;
-    }
-
-    @Override
+@Override
     public UpdateRoomFilterMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new UpdateRoomFilterMessageEvent();

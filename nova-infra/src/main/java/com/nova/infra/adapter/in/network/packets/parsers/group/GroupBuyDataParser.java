@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.group.GroupBuyDataMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses GroupBuyData packet from client.
  */
+@ParsesPacket(Incoming.GROUP_CREATE_OPTIONS)
 public class GroupBuyDataParser extends PacketParser<GroupBuyDataMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.GROUP_CREATE_OPTIONS;
-    }
-
-    @Override
+@Override
     public GroupBuyDataMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new GroupBuyDataMessageEvent();

@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.trading.TradingListItemMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes TradingListItem packet for client.
  */
+@ComposesPacket(Outgoing.TRADE_LIST_ITEM)
 public class TradingListItemComposer extends PacketComposer<TradingListItemMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.TRADE_LIST_ITEM;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, TradingListItemMessage message) {
         packet.appendInt(message.firstUserID());
         packet.appendInt(message.firstUserNumItems());

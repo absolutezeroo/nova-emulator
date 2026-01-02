@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.room.YouAreSpectatorMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes YouAreSpectator packet for client.
  */
+@ComposesPacket(Outgoing.ROOM_SPECTATOR)
 public class YouAreSpectatorComposer extends PacketComposer<YouAreSpectatorMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.ROOM_SPECTATOR;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, YouAreSpectatorMessage message) {
         // No fields to write
     }

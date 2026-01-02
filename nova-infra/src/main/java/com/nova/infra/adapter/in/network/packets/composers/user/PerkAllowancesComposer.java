@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.PerkAllowancesMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes PerkAllowances packet for client.
  */
+@ComposesPacket(Outgoing.USER_PERKS)
 public class PerkAllowancesComposer extends PacketComposer<PerkAllowancesMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.USER_PERKS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, PerkAllowancesMessage message) {
         // No fields to write
     }

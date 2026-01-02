@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.trading.TradingOtherNotAllowedMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes TradingOtherNotAllowed packet for client.
  */
+@ComposesPacket(Outgoing.TRADE_OTHER_NOT_ALLOWED)
 public class TradingOtherNotAllowedComposer extends PacketComposer<TradingOtherNotAllowedMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.TRADE_OTHER_NOT_ALLOWED;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, TradingOtherNotAllowedMessage message) {
         // No fields to write
     }

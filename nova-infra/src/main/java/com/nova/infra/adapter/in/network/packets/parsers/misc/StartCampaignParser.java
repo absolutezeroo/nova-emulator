@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.misc.StartCampaignMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses StartCampaign packet from client.
  */
+@ParsesPacket(Incoming.START_CAMPAIGN)
 public class StartCampaignParser extends PacketParser<StartCampaignMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.START_CAMPAIGN;
-    }
-
-    @Override
+@Override
     public StartCampaignMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new StartCampaignMessageEvent();

@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.user.GetExtendedProfileByNameMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses GetExtendedProfileByName packet from client.
  */
+@ParsesPacket(Incoming.USER_PROFILE_BY_NAME)
 public class GetExtendedProfileByNameParser extends PacketParser<GetExtendedProfileByNameMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.USER_PROFILE_BY_NAME;
-    }
-
-    @Override
+@Override
     public GetExtendedProfileByNameMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new GetExtendedProfileByNameMessageEvent();

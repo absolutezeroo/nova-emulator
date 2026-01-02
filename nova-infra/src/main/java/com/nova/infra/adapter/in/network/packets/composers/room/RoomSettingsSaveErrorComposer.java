@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.room.RoomSettingsSaveErrorMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RoomSettingsSaveError packet for client.
  */
+@ComposesPacket(Outgoing.ROOM_SETTINGS_SAVE_ERROR)
 public class RoomSettingsSaveErrorComposer extends PacketComposer<RoomSettingsSaveErrorMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.ROOM_SETTINGS_SAVE_ERROR;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RoomSettingsSaveErrorMessage message) {
         packet.appendInt(message.roomId());
         packet.appendInt(message.code());

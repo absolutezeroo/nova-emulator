@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.IgnoredUsersMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes IgnoredUsers packet for client.
  */
+@ComposesPacket(Outgoing.USER_IGNORED)
 public class IgnoredUsersComposer extends PacketComposer<IgnoredUsersMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.USER_IGNORED;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, IgnoredUsersMessage message) {
         // No fields to write
     }

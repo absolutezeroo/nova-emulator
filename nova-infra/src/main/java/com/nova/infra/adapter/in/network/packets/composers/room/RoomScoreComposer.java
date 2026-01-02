@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.room.RoomScoreMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RoomScore packet for client.
  */
+@ComposesPacket(Outgoing.ROOM_SCORE)
 public class RoomScoreComposer extends PacketComposer<RoomScoreMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.ROOM_SCORE;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RoomScoreMessage message) {
         packet.appendInt(message.totalLikes());
         packet.appendBoolean(message.canLike());

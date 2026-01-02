@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.room.RoomAdSearchMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses RoomAdSearch packet from client.
  */
+@ParsesPacket(Incoming.ROOM_AD_SEARCH)
 public class RoomAdSearchParser extends PacketParser<RoomAdSearchMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.ROOM_AD_SEARCH;
-    }
-
-    @Override
+@Override
     public RoomAdSearchMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new RoomAdSearchMessageEvent();

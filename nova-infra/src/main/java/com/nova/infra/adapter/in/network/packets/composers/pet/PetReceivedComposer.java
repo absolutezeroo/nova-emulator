@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.pet.PetReceivedMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes PetReceived packet for client.
  */
+@ComposesPacket(Outgoing.PET_RECEIVED)
 public class PetReceivedComposer extends PacketComposer<PetReceivedMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.PET_RECEIVED;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, PetReceivedMessage message) {
         // No fields to write
     }

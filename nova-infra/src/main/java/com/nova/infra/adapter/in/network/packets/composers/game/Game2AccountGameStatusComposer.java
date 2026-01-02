@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.game.Game2AccountGameStatusMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes Game2AccountGameStatus packet for client.
  */
+@ComposesPacket(Outgoing.GAME_CENTER_STATUS)
 public class Game2AccountGameStatusComposer extends PacketComposer<Game2AccountGameStatusMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.GAME_CENTER_STATUS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, Game2AccountGameStatusMessage message) {
         packet.appendInt(message.gameTypeId());
         packet.appendInt(message.freeGamesLeft());

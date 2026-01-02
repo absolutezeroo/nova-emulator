@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.unit.RoomUnitChatShoutMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RoomUnitChatShout packet for client.
  */
+@ComposesPacket(Outgoing.UNIT_CHAT_SHOUT)
 public class RoomUnitChatShoutComposer extends PacketComposer<RoomUnitChatShoutMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.UNIT_CHAT_SHOUT;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RoomUnitChatShoutMessage message) {
         // No fields to write
     }

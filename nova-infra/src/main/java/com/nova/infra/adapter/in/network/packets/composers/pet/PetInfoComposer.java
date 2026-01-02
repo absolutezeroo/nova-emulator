@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.pet.PetInfoMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes PetInfo packet for client.
  */
+@ComposesPacket(Outgoing.PET_INFO)
 public class PetInfoComposer extends PacketComposer<PetInfoMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.PET_INFO;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, PetInfoMessage message) {
         packet.appendInt(message.id());
         packet.appendString(message.name());

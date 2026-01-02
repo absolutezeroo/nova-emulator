@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.navigator.UserEventCatsMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes UserEventCats packet for client.
  */
+@ComposesPacket(Outgoing.NAVIGATOR_EVENT_CATEGORIES)
 public class UserEventCatsComposer extends PacketComposer<UserEventCatsMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.NAVIGATOR_EVENT_CATEGORIES;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, UserEventCatsMessage message) {
         // No fields to write
     }

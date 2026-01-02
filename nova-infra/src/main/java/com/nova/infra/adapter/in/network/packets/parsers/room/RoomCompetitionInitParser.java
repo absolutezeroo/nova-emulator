@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.room.RoomCompetitionInitMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses RoomCompetitionInit packet from client.
  */
+@ParsesPacket(Incoming.ROOM_COMPETITION_INIT)
 public class RoomCompetitionInitParser extends PacketParser<RoomCompetitionInitMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.ROOM_COMPETITION_INIT;
-    }
-
-    @Override
+@Override
     public RoomCompetitionInitMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new RoomCompetitionInitMessageEvent();

@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.RentableSpaceStatusMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RentableSpaceStatus packet for client.
  */
+@ComposesPacket(Outgoing.RENTABLE_SPACE_STATUS)
 public class RentableSpaceStatusComposer extends PacketComposer<RentableSpaceStatusMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.RENTABLE_SPACE_STATUS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RentableSpaceStatusMessage message) {
         packet.appendBoolean(message.rented());
         packet.appendInt(message.canRentErrorCode());

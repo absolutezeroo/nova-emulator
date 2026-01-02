@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.ActivityPointNotificationMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes ActivityPointNotification packet for client.
  */
+@ComposesPacket(Outgoing.ACTIVITY_POINT_NOTIFICATION)
 public class ActivityPointNotificationComposer extends PacketComposer<ActivityPointNotificationMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.ACTIVITY_POINT_NOTIFICATION;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, ActivityPointNotificationMessage message) {
         packet.appendInt(message.amount());
         packet.appendInt(message.amountChanged());

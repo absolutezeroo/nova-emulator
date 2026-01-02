@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.catalog.BuildersClubQueryFurniCountMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses BuildersClubQueryFurniCount packet from client.
  */
+@ParsesPacket(Incoming.BUILDERS_CLUB_QUERY_FURNI_COUNT)
 public class BuildersClubQueryFurniCountParser extends PacketParser<BuildersClubQueryFurniCountMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.BUILDERS_CLUB_QUERY_FURNI_COUNT;
-    }
-
-    @Override
+@Override
     public BuildersClubQueryFurniCountMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new BuildersClubQueryFurniCountMessageEvent();

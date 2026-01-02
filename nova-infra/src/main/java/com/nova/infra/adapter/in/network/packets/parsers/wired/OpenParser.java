@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.wired.OpenMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses Open packet from client.
  */
+@ParsesPacket(Incoming.WIRED_OPEN)
 public class OpenParser extends PacketParser<OpenMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.WIRED_OPEN;
-    }
-
-    @Override
+@Override
     public OpenMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new OpenMessageEvent();

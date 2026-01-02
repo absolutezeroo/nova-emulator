@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.AchievementsScoreMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes AchievementsScore packet for client.
  */
+@ComposesPacket(Outgoing.USER_ACHIEVEMENT_SCORE)
 public class AchievementsScoreComposer extends PacketComposer<AchievementsScoreMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.USER_ACHIEVEMENT_SCORE;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, AchievementsScoreMessage message) {
         // No fields to write
     }

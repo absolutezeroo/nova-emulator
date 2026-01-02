@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.IdentityAccountsMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes IdentityAccounts packet for client.
  */
+@ComposesPacket(Outgoing.HANDSHAKE_IDENTITY_ACCOUNT)
 public class IdentityAccountsComposer extends PacketComposer<IdentityAccountsMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.HANDSHAKE_IDENTITY_ACCOUNT;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, IdentityAccountsMessage message) {
         // No fields to write
     }

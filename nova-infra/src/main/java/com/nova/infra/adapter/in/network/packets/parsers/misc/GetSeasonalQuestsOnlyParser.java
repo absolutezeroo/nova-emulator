@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.misc.GetSeasonalQuestsOnlyMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses GetSeasonalQuestsOnly packet from client.
  */
+@ParsesPacket(Incoming.GET_SEASONAL_QUESTS_ONLY)
 public class GetSeasonalQuestsOnlyParser extends PacketParser<GetSeasonalQuestsOnlyMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.GET_SEASONAL_QUESTS_ONLY;
-    }
-
-    @Override
+@Override
     public GetSeasonalQuestsOnlyMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new GetSeasonalQuestsOnlyMessageEvent();

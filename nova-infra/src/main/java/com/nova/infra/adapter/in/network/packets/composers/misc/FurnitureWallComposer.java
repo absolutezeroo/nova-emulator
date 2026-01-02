@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.FurnitureWallMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes FurnitureWall packet for client.
  */
+@ComposesPacket(Outgoing.ITEM_WALL)
 public class FurnitureWallComposer extends PacketComposer<FurnitureWallMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.ITEM_WALL;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, FurnitureWallMessage message) {
         packet.appendInt(message.spriteId());
         packet.appendString(message.location());

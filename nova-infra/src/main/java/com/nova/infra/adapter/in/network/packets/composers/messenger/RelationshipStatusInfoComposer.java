@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.messenger.RelationshipStatusInfoMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes RelationshipStatusInfo packet for client.
  */
+@ComposesPacket(Outgoing.MESSENGER_RELATIONSHIPS)
 public class RelationshipStatusInfoComposer extends PacketComposer<RelationshipStatusInfoMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.MESSENGER_RELATIONSHIPS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, RelationshipStatusInfoMessage message) {
         packet.appendInt(message.relationshipStatusType());
         packet.appendInt(message.friendCount());

@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserSettingsMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes UserSettings packet for client.
  */
+@ComposesPacket(Outgoing.USER_SETTINGS)
 public class UserSettingsComposer extends PacketComposer<UserSettingsMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.USER_SETTINGS;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, UserSettingsMessage message) {
         packet.appendInt(message.volumeSystem());
         packet.appendInt(message.volumeFurni());

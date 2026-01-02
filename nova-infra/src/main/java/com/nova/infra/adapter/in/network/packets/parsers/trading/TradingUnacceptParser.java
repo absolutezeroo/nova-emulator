@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.parsers.PacketParser;
 import com.nova.infra.adapter.in.network.packets.headers.Incoming;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import com.nova.infra.adapter.in.network.packets.incoming.trading.TradingUnacceptMessageEvent;
+import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
  * Parses TradingUnaccept packet from client.
  */
+@ParsesPacket(Incoming.TRADE_UNACCEPT)
 public class TradingUnacceptParser extends PacketParser<TradingUnacceptMessageEvent> {
-
-    @Override
-    public int getHeaderId() {
-        return Incoming.TRADE_UNACCEPT;
-    }
-
-    @Override
+@Override
     public TradingUnacceptMessageEvent parse(ClientMessage message) {
         // No fields to parse
         return new TradingUnacceptMessageEvent();

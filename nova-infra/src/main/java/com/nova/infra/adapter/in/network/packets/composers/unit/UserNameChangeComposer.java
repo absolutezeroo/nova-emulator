@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.unit.UserNameChangeMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes UserNameChange packet for client.
  */
+@ComposesPacket(Outgoing.UNIT_CHANGE_NAME)
 public class UserNameChangeComposer extends PacketComposer<UserNameChangeMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.UNIT_CHANGE_NAME;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, UserNameChangeMessage message) {
         packet.appendInt(message.webId());
         packet.appendInt(message.id());

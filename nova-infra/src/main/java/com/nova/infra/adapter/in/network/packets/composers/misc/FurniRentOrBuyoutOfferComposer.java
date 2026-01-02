@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.FurniRentOrBuyoutOfferMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes FurniRentOrBuyoutOffer packet for client.
  */
+@ComposesPacket(Outgoing.RENTABLE_FURNI_RENT_OR_BUYOUT_OFFER)
 public class FurniRentOrBuyoutOfferComposer extends PacketComposer<FurniRentOrBuyoutOfferMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.RENTABLE_FURNI_RENT_OR_BUYOUT_OFFER;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, FurniRentOrBuyoutOfferMessage message) {
         packet.appendBoolean(message.isWallItem());
         packet.appendString(message.furniTypeName());

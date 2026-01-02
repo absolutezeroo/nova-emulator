@@ -4,18 +4,14 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
 import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import com.nova.infra.adapter.in.network.packets.outgoing.catalog.CatalogPageWithEarliestExpiryMessage;
+import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
  * Composes CatalogPageWithEarliestExpiry packet for client.
  */
+@ComposesPacket(Outgoing.CATALOG_EARLIEST_EXPIRY)
 public class CatalogPageWithEarliestExpiryComposer extends PacketComposer<CatalogPageWithEarliestExpiryMessage> {
-
-    @Override
-    public int getPacketId() {
-        return Outgoing.CATALOG_EARLIEST_EXPIRY;
-    }
-
-    @Override
+@Override
     protected void write(PacketBuffer packet, CatalogPageWithEarliestExpiryMessage message) {
         packet.appendString(message.pageName());
         packet.appendInt(message.secondsToExpiry());
