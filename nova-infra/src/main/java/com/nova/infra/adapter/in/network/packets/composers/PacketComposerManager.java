@@ -68,7 +68,7 @@ public class PacketComposerManager {
         PacketBuffer packet = composer.compose(message);
 
         LOGGER.debug("Composed {} (packet ID {}, {} bytes)",
-                messageType.getSimpleName(), composer.getPacketId(), packet.readableBytes());
+                messageType.getSimpleName(), composer.getPacketId(), packet.writerIndex());
 
         return packet;
     }

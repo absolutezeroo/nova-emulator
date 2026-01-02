@@ -1,67 +1,50 @@
 package com.nova.infra.adapter.in.network.packets.outgoing;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
  * Buffer for composing outgoing server packets.
  * <p>
- * Complete packet structure (Habbo protocol):
- * <pre>
- * [4 bytes: length] [2 bytes: header ID] [N bytes: body]
- * </pre>
+ * This is a low-level buffer that provides methods to append various data types.
+ * The caller manages the packet structure (length header, packet ID).
  * <p>
- * The buffer is self-contained: call {@link #finalize()} after writing
- * all data to update the length header, then use {@link #getBuffer()}
- * to get the complete packet ready for transmission.
+ * Typical usage:
+ * <pre>
+ * PacketBuffer buffer = new PacketBuffer();
+ * buffer.appendInt(0); // Length placeholder
+ * buffer.appendShort(packetId); // Packet ID
+ * buffer.appendString("data"); // Body data
+ * buffer.updateHeaderLength(); // Update length at position 0
+ * channel.writeAndFlush(buffer.getBuffer());
+ * </pre>
  */
 public class PacketBuffer {
 
     private final ByteBuf buffer;
-    private final int headerId;
+    private final ByteBufOutputStream stream;
 
     /**
-     * Creates a new packet buffer with the specified header ID.
-     * <p>
-     * Initializes the buffer with:
-     * - 4-byte length placeholder (to be updated via finalize())
-     * - 2-byte header ID
-     *
-     * @param headerId the packet header ID
+     * Creates a new empty packet buffer.
      */
-    public PacketBuffer(int headerId) {
-        this.headerId = headerId;
+    public PacketBuffer() {
         this.buffer = Unpooled.buffer();
-
-        // Write length placeholder (4 bytes) - will be updated in finalize()
-        buffer.writeInt(0);
-
-        // Write header ID (2 bytes)
-        buffer.writeShort(headerId);
+        this.stream = new ByteBufOutputStream(buffer);
     }
 
     /**
-     * Gets the packet header ID.
+     * Appends a boolean value (1 byte).
      */
-    public int getHeaderId() {
-        return headerId;
-    }
-
-    /**
-     * Appends an integer (4 bytes, big-endian).
-     */
-    public PacketBuffer appendInt(int value) {
-        buffer.writeInt(value);
-        return this;
-    }
-
-    /**
-     * Appends a short (2 bytes, big-endian).
-     */
-    public PacketBuffer appendShort(int value) {
-        buffer.writeShort(value);
+    public PacketBuffer appendBoolean(boolean value) {
+        try {
+            stream.writeBoolean(value);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write boolean", e);
+        }
         return this;
     }
 
@@ -69,33 +52,35 @@ public class PacketBuffer {
      * Appends a byte.
      */
     public PacketBuffer appendByte(int value) {
-        buffer.writeByte(value);
+        try {
+            stream.writeByte(value);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write byte", e);
+        }
         return this;
     }
 
     /**
-     * Appends a boolean (1 byte: 0 or 1).
+     * Appends a short (2 bytes, big-endian).
      */
-    public PacketBuffer appendBoolean(boolean value) {
-        buffer.writeByte(value ? 1 : 0);
+    public PacketBuffer appendShort(int value) {
+        try {
+            stream.writeShort(value);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write short", e);
+        }
         return this;
     }
 
     /**
-     * Appends a string (2-byte length prefix + UTF-8 bytes).
+     * Appends an integer (4 bytes, big-endian).
      */
-    public PacketBuffer appendString(String value) {
-        byte[] data = value.getBytes(StandardCharsets.UTF_8);
-        buffer.writeShort(data.length);
-        buffer.writeBytes(data);
-        return this;
-    }
-
-    /**
-     * Appends raw bytes.
-     */
-    public PacketBuffer appendBytes(byte[] data) {
-        buffer.writeBytes(data);
+    public PacketBuffer appendInt(int value) {
+        try {
+            stream.writeInt(value);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write int", e);
+        }
         return this;
     }
 
@@ -103,54 +88,69 @@ public class PacketBuffer {
      * Appends a long (8 bytes, big-endian).
      */
     public PacketBuffer appendLong(long value) {
-        buffer.writeLong(value);
+        try {
+            stream.writeLong(value);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write long", e);
+        }
         return this;
     }
 
     /**
-     * Finalizes the packet by updating the length header.
-     * <p>
-     * Must be called after all data has been written.
-     * Length = total size - 4 (length field itself is not counted).
-     *
-     * @return this buffer for chaining
+     * Appends a string (2-byte length prefix + bytes).
      */
-    public PacketBuffer finalize() {
-        // Length = total bytes written - 4 bytes (length field)
-        buffer.setInt(0, buffer.writerIndex() - 4);
+    public PacketBuffer appendString(String value) {
+        try {
+            byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+            stream.writeShort(bytes.length);
+            stream.write(bytes);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write string", e);
+        }
         return this;
     }
 
     /**
-     * Gets the underlying ByteBuf ready for transmission.
+     * Appends a byte array.
+     */
+    public PacketBuffer appendBytes(byte[] data) {
+        try {
+            stream.write(data);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write bytes", e);
+        }
+        return this;
+    }
+
+    /**
+     * Updates the length field at position 0.
      * <p>
-     * Call {@link #finalize()} before this to ensure the length header is set.
+     * Call this after all data has been written.
+     * Sets position 0 to (total size - 4).
+     */
+    public void updateHeaderLength() {
+        buffer.setInt(0, buffer.writerIndex() - 4);
+    }
+
+    /**
+     * Gets the underlying ByteBuf for transmission.
      */
     public ByteBuf getBuffer() {
         return buffer;
     }
 
     /**
-     * Gets the total size of the packet (including headers).
-     */
-    public int size() {
-        return buffer.writerIndex();
-    }
-
-    /**
-     * Gets the body size (excluding 4-byte length and 2-byte header ID).
-     */
-    public int bodySize() {
-        return buffer.writerIndex() - 6;
-    }
-
-    /**
-     * Converts the packet to a byte array.
+     * Converts the buffer to a byte array.
      */
     public byte[] toByteArray() {
-        byte[] bytes = new byte[buffer.readableBytes()];
-        buffer.getBytes(buffer.readerIndex(), bytes);
-        return bytes;
+        return buffer.copy().array();
+    }
+
+    /**
+     * Gets the current writer index (total bytes written).
+     */
+    public int writerIndex() {
+        return buffer.writerIndex();
     }
 
     /**
@@ -158,10 +158,5 @@ public class PacketBuffer {
      */
     public void release() {
         buffer.release();
-    }
-
-    @Override
-    public String toString() {
-        return "PacketBuffer{headerId=" + headerId + ", bodySize=" + bodySize() + "}";
     }
 }
