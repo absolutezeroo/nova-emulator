@@ -1,0 +1,31 @@
+package com.nova.infra.adapter.in.network.packets.composers.user;
+
+import com.nova.infra.adapter.in.network.packets.composers.PacketComposer;
+import com.nova.infra.adapter.in.network.packets.headers.Outgoing;
+import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.FurnitureListMessage;
+
+/**
+ * Composes FurnitureList packet for client.
+ */
+public class FurnitureListComposer extends PacketComposer<FurnitureListMessage> {
+
+    @Override
+    public int getPacketId() {
+        return Outgoing.USER_FURNITURE;
+    }
+
+    @Override
+    protected void write(PacketBuffer packet, FurnitureListMessage message) {
+        packet.appendInt(message.itemId());
+        packet.appendString(message.furniType());
+        packet.appendInt(message.ref());
+        packet.appendInt(message.spriteId());
+        packet.appendInt(message.category());
+        packet.appendBoolean(message.isRecyclable());
+        packet.appendBoolean(message.tradable());
+        packet.appendBoolean(message.isGroupable());
+        packet.appendBoolean(message.sellable());
+        packet.appendInt(message.secondsToExpiration());
+    }
+}
