@@ -54,10 +54,15 @@ nova-core/
     │   │   └── UserId.java      # Value object (record)
     │   └── port/
     │       ├── in/         # Input Ports (Use Case interfaces)
-    │       │   └── UserUseCase.java
-    │       └── out/        # Output Ports (Repository interfaces)
+    │       │   ├── UserUseCase.java
+    │       │   └── network/
+    │       │       └── ConnectionListener.java  # Network event callbacks
+    │       └── out/        # Output Ports (Repository/Gateway interfaces)
     │           ├── UserRepository.java
-    │           └── SessionRepository.java
+    │           ├── SessionRepository.java
+    │           └── network/
+    │               ├── NetworkConnection.java   # Abstract client connection
+    │               └── GameServerPort.java      # Abstract server lifecycle
     └── exception/          # Domain exceptions
         ├── DomainException.java
         └── UserNotFoundException.java
@@ -79,19 +84,26 @@ nova-infra/
     ├── adapter/
     │   ├── in/             # Inbound Adapters (drive the application)
     │   │   └── network/
-    │   │       ├── GameServer.java              # TCP server (port 30000)
-    │   │       ├── GameChannelInitializer.java  # TCP pipeline
-    │   │       ├── PolicyFileHandler.java       # Flash policy XML
-    │   │       ├── GameByteFrameDecoder.java    # 4-byte length framing
-    │   │       ├── GamePacketDecoder.java       # Packet decoder
-    │   │       ├── GamePacketEncoder.java       # Packet encoder
-    │   │       ├── GameHandler.java             # Packet processor
-    │   │       ├── ClientMessage.java           # Inbound packet DTO
-    │   │       ├── ServerMessage.java           # Outbound packet DTO
-    │   │       └── websocket/
-    │   │           ├── WebSocketGameServer.java         # WS server (port 2096)
-    │   │           ├── WebSocketChannelInitializer.java # WS pipeline
-    │   │           └── WebSocketFrameHandler.java       # WS frame bridge
+    │   │       ├── codec/                       # Packet encoding/decoding
+    │   │       │   ├── ClientMessage.java           # Inbound packet DTO
+    │   │       │   ├── ServerMessage.java           # Outbound packet DTO
+    │   │       │   ├── MessageEncoder.java          # Domain→Wire interface
+    │   │       │   ├── MessageDecoder.java          # Wire→Domain interface
+    │   │       │   ├── GameByteFrameDecoder.java    # 4-byte length framing
+    │   │       │   ├── GamePacketDecoder.java       # Packet decoder
+    │   │       │   └── GamePacketEncoder.java       # Packet encoder
+    │   │       ├── handler/                     # Netty handlers
+    │   │       │   ├── GameHandler.java             # Packet processor
+    │   │       │   └── PolicyFileHandler.java       # Flash policy XML
+    │   │       ├── session/                     # Connection management
+    │   │       │   └── NettyConnection.java         # Implements NetworkConnection
+    │   │       ├── server/                      # TCP server
+    │   │       │   ├── GameServer.java              # Implements GameServerPort
+    │   │       │   └── GameChannelInitializer.java  # TCP pipeline
+    │   │       └── websocket/                   # WebSocket server
+    │   │           ├── WebSocketGameServer.java     # Implements GameServerPort
+    │   │           ├── WebSocketChannelInitializer.java
+    │   │           └── WebSocketFrameHandler.java
     │   └── out/            # Outbound Adapters (driven by application)
     │       └── persistence/
     │           ├── MySqlUserRepository.java
@@ -101,8 +113,9 @@ nova-infra/
 ```
 
 **Inbound Adapters:** Receive external requests and translate them into calls to input ports.
-- `GameServer`: Netty TCP server for Flash/Air clients (port 30000)
-- `WebSocketGameServer`: Netty WebSocket server for Nitro HTML5 client (port 2096)
+- `server/GameServer`: Netty TCP server for Flash/Air clients (port 30000) - implements `GameServerPort`
+- `websocket/WebSocketGameServer`: Netty WebSocket server for Nitro HTML5 (port 2096) - implements `GameServerPort`
+- `session/NettyConnection`: Wraps Netty Channel - implements `NetworkConnection`
 
 **Outbound Adapters:** Implement output ports to interact with external systems.
 - `MySqlUserRepository`: Persists users to MySQL via HikariCP
@@ -154,6 +167,40 @@ nova-app/
 ```
 
 ## Network Layer
+
+### Hexagonal Network Abstraction
+
+The network layer follows hexagonal principles - the domain defines abstract ports, infrastructure provides implementations:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              nova-core                                       │
+│  ┌───────────────────────────┐              ┌───────────────────────────┐   │
+│  │   ConnectionListener      │              │    NetworkConnection      │   │
+│  │   (Input Port)            │◀─────────────│    (Output Port)          │   │
+│  │                           │   callbacks  │                           │   │
+│  │   onConnect(connection)   │              │   send(Object response)   │   │
+│  │   onCommand(conn, cmd)    │              │   disconnect()            │   │
+│  │   onDisconnect(conn)      │              │   getIpAddress()          │   │
+│  └───────────────────────────┘              └─────────────▲─────────────┘   │
+│                                                           │ implements      │
+└───────────────────────────────────────────────────────────│─────────────────┘
+                                                            │
+┌───────────────────────────────────────────────────────────│─────────────────┐
+│                              nova-infra                   │                 │
+│                                                           │                 │
+│  Binary Packet ──▶ MessageDecoder ──▶ Command DTO ────────┤                 │
+│                                              (to core)    │                 │
+│                                                           │                 │
+│  ┌─────────────────────────┐              ┌───────────────┴─────────────┐   │
+│  │   GameServer            │              │    NettyConnection          │   │
+│  │   implements            │              │    (hides Netty Channel)    │   │
+│  │   GameServerPort        │              │                             │   │
+│  └─────────────────────────┘              └─────────────────────────────┘   │
+│                                                                             │
+│  Response DTO ◀── MessageEncoder ◀── UseCase result                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Habbo Packet Structure
 
