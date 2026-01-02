@@ -38,14 +38,22 @@ mvn clean package
 java -jar nova-app/target/NovaEmulator.jar
 ```
 
-The game server listens on port **30000** by default.
+The emulator starts two servers:
+- **TCP port 30000** - Flash/Air client connections
+- **WebSocket port 2096** - Nitro HTML5 client connections
 
 ## Project Structure
 
 ```
 nova-emulator/
 ├── nova-core/     # Domain layer (entities, ports, business rules)
-├── nova-infra/    # Infrastructure (Netty server, MySQL repositories)
+├── nova-infra/    # Infrastructure (Netty servers, MySQL repositories)
+│   └── adapter/in/network/
+│       ├── GameServer.java           # TCP server (port 30000)
+│       ├── GameChannelInitializer    # TCP pipeline config
+│       └── websocket/
+│           ├── WebSocketGameServer   # WebSocket server (port 2096)
+│           └── WebSocketChannelInitializer
 ├── nova-app/      # Application bootstrap and DI configuration
 └── pom.xml        # Parent POM
 ```

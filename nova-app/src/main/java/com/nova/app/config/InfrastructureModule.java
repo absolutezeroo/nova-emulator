@@ -5,17 +5,18 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.nova.core.domain.port.out.SessionRepository;
 import com.nova.core.domain.port.out.UserRepository;
+import com.nova.infra.adapter.in.network.GameChannelInitializer;
 import com.nova.infra.adapter.in.network.GameServer;
+import com.nova.infra.adapter.in.network.websocket.WebSocketChannelInitializer;
+import com.nova.infra.adapter.in.network.websocket.WebSocketGameServer;
 import com.nova.infra.adapter.out.persistence.InMemorySessionRepository;
 import com.nova.infra.adapter.out.persistence.MySqlUserRepository;
 import com.nova.infra.config.DatabaseConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.SocketChannel;
 
 /**
  * Guice module for Infrastructure layer bindings.
- *
+ * <p>
  * Binds output ports to their adapter implementations.
  * Configures infrastructure components (database, network).
  */
@@ -31,6 +32,7 @@ public class InfrastructureModule extends AbstractModule {
 
     private static final String GAME_HOST = "0.0.0.0";
     private static final int GAME_PORT = 30000;
+    private static final int WEBSOCKET_PORT = 2096;
 
     @Override
     protected void configure() {
@@ -56,18 +58,12 @@ public class InfrastructureModule extends AbstractModule {
     @Provides
     @Singleton
     public GameServer provideGameServer() {
-        // TODO: Create proper channel initializer with packet handlers
-        ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<>() {
-            @Override
-            protected void initChannel(SocketChannel ch) {
-                // Pipeline will be configured here with:
-                // - Frame decoder
-                // - Packet decoder
-                // - Message handlers
-                // - Packet encoder
-            }
-        };
+        return new GameServer(GAME_HOST, GAME_PORT, new GameChannelInitializer());
+    }
 
-        return new GameServer(GAME_HOST, GAME_PORT, initializer);
+    @Provides
+    @Singleton
+    public WebSocketGameServer provideWebSocketGameServer() {
+        return new WebSocketGameServer(GAME_HOST, WEBSOCKET_PORT, new WebSocketChannelInitializer());
     }
 }

@@ -17,9 +17,9 @@ NovaEmulator follows **Hexagonal Architecture** (also known as Ports and Adapter
 │  │   Inbound Adapters  │                         │    Outbound Adapters    │  │
 │  │                     │                         │                         │  │
 │  │  • GameServer       │                         │  • MySqlUserRepository  │  │
-│  │    (Netty)          │                         │  • InMemorySession      │  │
-│  │  • PacketHandlers   │                         │    Repository           │  │
-│  │    (future)         │                         │                         │  │
+│  │    (TCP:30000)      │                         │  • InMemorySession      │  │
+│  │  • WebSocketServer  │                         │    Repository           │  │
+│  │    (WS:2096)        │                         │                         │  │
 │  └──────────┬──────────┘                         └────────────▲────────────┘  │
 │             │ calls                                implements │               │
 └─────────────│─────────────────────────────────────────────────│───────────────┘
@@ -79,7 +79,19 @@ nova-infra/
     ├── adapter/
     │   ├── in/             # Inbound Adapters (drive the application)
     │   │   └── network/
-    │   │       └── GameServer.java      # Netty server
+    │   │       ├── GameServer.java              # TCP server (port 30000)
+    │   │       ├── GameChannelInitializer.java  # TCP pipeline
+    │   │       ├── PolicyFileHandler.java       # Flash policy XML
+    │   │       ├── GameByteFrameDecoder.java    # 4-byte length framing
+    │   │       ├── GamePacketDecoder.java       # Packet decoder
+    │   │       ├── GamePacketEncoder.java       # Packet encoder
+    │   │       ├── GameHandler.java             # Packet processor
+    │   │       ├── ClientMessage.java           # Inbound packet DTO
+    │   │       ├── ServerMessage.java           # Outbound packet DTO
+    │   │       └── websocket/
+    │   │           ├── WebSocketGameServer.java         # WS server (port 2096)
+    │   │           ├── WebSocketChannelInitializer.java # WS pipeline
+    │   │           └── WebSocketFrameHandler.java       # WS frame bridge
     │   └── out/            # Outbound Adapters (driven by application)
     │       └── persistence/
     │           ├── MySqlUserRepository.java
@@ -89,7 +101,8 @@ nova-infra/
 ```
 
 **Inbound Adapters:** Receive external requests and translate them into calls to input ports.
-- `GameServer`: Netty-based TCP server accepting Habbo client connections
+- `GameServer`: Netty TCP server for Flash/Air clients (port 30000)
+- `WebSocketGameServer`: Netty WebSocket server for Nitro HTML5 client (port 2096)
 
 **Outbound Adapters:** Implement output ports to interact with external systems.
 - `MySqlUserRepository`: Persists users to MySQL via HikariCP
@@ -138,6 +151,104 @@ nova-app/
           │
           ▼
 5. PacketHandler sends response to client
+```
+
+## Network Layer
+
+### Habbo Packet Structure
+
+All Habbo packets follow this binary format:
+
+```
+┌──────────────┬──────────────┬─────────────────────┐
+│   Length     │   Header ID  │       Body          │
+│   4 bytes    │   2 bytes    │   Variable length   │
+│  (int32 BE)  │  (int16 BE)  │                     │
+└──────────────┴──────────────┴─────────────────────┘
+```
+
+### TCP Pipeline (Flash/Air Clients)
+
+```
+                          Inbound Flow
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  PolicyFileHandler  │  Detects <policy-file-request/>
+                    │  (First byte check) │  Returns XML, closes connection
+                    └──────────┬──────────┘
+                              │ (if not policy)
+                              ▼
+                    ┌─────────────────────┐
+                    │ GameByteFrameDecoder│  Extracts frames using
+                    │ (LengthFieldBased)  │  4-byte length prefix
+                    └──────────┬──────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  GamePacketDecoder  │  Reads 2-byte header ID
+                    │  (ByteToMessage)    │  Creates ClientMessage
+                    └──────────┬──────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │     GameHandler     │  Routes to packet handlers
+                    │ (SimpleChannelIn)   │  Based on header ID
+                    └─────────────────────┘
+
+                         Outbound Flow
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  GamePacketEncoder  │  Encodes ServerMessage
+                    │  (MessageToByte)    │  to length+header+body
+                    └─────────────────────┘
+```
+
+### WebSocket Pipeline (Nitro HTML5 Client)
+
+```
+                          Inbound Flow
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │   HttpServerCodec   │  HTTP request/response
+                    └──────────┬──────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │ HttpObjectAggregator│  Aggregates HTTP parts
+                    └──────────┬──────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │WebSocketProtocol    │  Handles WS upgrade,
+                    │     Handler         │  ping/pong, close
+                    └──────────┬──────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │WebSocketFrameHandler│  Extracts ByteBuf from
+                    │                     │  BinaryWebSocketFrame,
+                    │                     │  decodes to ClientMessage
+                    └──────────┬──────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  GamePacketEncoder  │  Encodes ServerMessage
+                    └─────────────────────┘
+```
+
+### Cross-Domain Policy (Flash)
+
+When a Flash client connects, it first sends `<policy-file-request/>`. The server responds with:
+
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE cross-domain-policy SYSTEM "/xml/dtds/cross-domain-policy.dtd">
+<cross-domain-policy>
+<allow-access-from domain="*" to-ports="1-31111" />
+</cross-domain-policy>
 ```
 
 ## Dependency Injection
