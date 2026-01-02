@@ -1,5 +1,6 @@
-package com.nova.infra.adapter.in.network;
+package com.nova.infra.adapter.in.network.server;
 
+import com.nova.core.domain.port.out.network.GameServerPort;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -9,12 +10,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Netty-based game server (Inbound Adapter).
- * Handles client connections and packet routing.
+ * Netty TCP implementation of {@link GameServerPort}.
+ * <p>
+ * This is an inbound adapter that handles raw TCP connections
+ * from Flash/Air Habbo clients. It implements the core's GameServerPort
+ * interface, hiding all Netty details from the domain layer.
  */
-public class GameServer {
+public class GameServer implements GameServerPort {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GameServer.class);
+    private static final String TYPE = "TCP";
 
     private final String host;
     private final int port;
@@ -30,6 +35,7 @@ public class GameServer {
         this.channelInitializer = channelInitializer;
     }
 
+    @Override
     public void start() throws InterruptedException {
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
@@ -45,11 +51,12 @@ public class GameServer {
         ChannelFuture future = bootstrap.bind(host, port).sync();
         serverChannel = future.channel();
 
-        LOGGER.info("Game server started on {}:{}", host, port);
+        LOGGER.info("{} server started on {}:{}", TYPE, host, port);
     }
 
+    @Override
     public void stop() {
-        LOGGER.info("Stopping game server...");
+        LOGGER.info("Stopping {} server...", TYPE);
 
         if (serverChannel != null) {
             serverChannel.close();
@@ -63,10 +70,21 @@ public class GameServer {
             bossGroup.shutdownGracefully();
         }
 
-        LOGGER.info("Game server stopped");
+        LOGGER.info("{} server stopped", TYPE);
     }
 
+    @Override
     public boolean isRunning() {
         return serverChannel != null && serverChannel.isActive();
+    }
+
+    @Override
+    public int getPort() {
+        return port;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 }

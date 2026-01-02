@@ -1,5 +1,6 @@
-package com.nova.infra.adapter.in.network;
+package com.nova.infra.adapter.in.network.handler;
 
+import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -18,12 +19,14 @@ public class GameHandler extends SimpleChannelInboundHandler<ClientMessage> {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         LOGGER.info("Client connected: {}", ctx.channel().remoteAddress());
+
         super.channelActive(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         LOGGER.info("Client disconnected: {}", ctx.channel().remoteAddress());
+
         super.channelInactive(ctx);
     }
 
@@ -41,6 +44,7 @@ public class GameHandler extends SimpleChannelInboundHandler<ClientMessage> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         LOGGER.error("Error handling packet from {}: {}", ctx.channel().remoteAddress(), cause.getMessage(), cause);
+
         ctx.close();
     }
 }

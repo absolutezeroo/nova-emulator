@@ -1,7 +1,6 @@
-package com.nova.infra.adapter.in.network;
+package com.nova.infra.adapter.in.network.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 import java.nio.charset.StandardCharsets;
 
@@ -42,7 +41,9 @@ public class ClientMessage {
     public String readString() {
         int length = body.readShort();
         byte[] data = new byte[length];
+
         body.readBytes(data);
+
         return new String(data, StandardCharsets.UTF_8);
     }
 

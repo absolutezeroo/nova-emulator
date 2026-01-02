@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.in.network.websocket;
 
-import com.nova.infra.adapter.in.network.ClientMessage;
+import com.nova.infra.adapter.in.network.codec.ClientMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;

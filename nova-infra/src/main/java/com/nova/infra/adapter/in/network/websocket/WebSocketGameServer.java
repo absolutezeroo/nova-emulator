@@ -1,5 +1,6 @@
 package com.nova.infra.adapter.in.network.websocket;
 
+import com.nova.core.domain.port.out.network.GameServerPort;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -9,15 +10,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * WebSocket game server for Nitro client connections.
+ * Netty WebSocket implementation of {@link GameServerPort}.
  * <p>
- * Nitro HTML5 client uses WebSockets instead of raw TCP.
- * This server handles the HTTP upgrade and WebSocket framing,
- * then delegates to the same packet handlers as the TCP server.
+ * This is an inbound adapter for Nitro HTML5 client connections.
+ * It handles the HTTP upgrade and WebSocket framing, implementing
+ * the core's GameServerPort interface to hide all Netty details.
  */
-public class WebSocketGameServer {
+public class WebSocketGameServer implements GameServerPort {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketGameServer.class);
+    private static final String TYPE = "WebSocket";
 
     private final String host;
     private final int port;
@@ -33,6 +35,7 @@ public class WebSocketGameServer {
         this.channelInitializer = channelInitializer;
     }
 
+    @Override
     public void start() throws InterruptedException {
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
@@ -48,11 +51,12 @@ public class WebSocketGameServer {
         ChannelFuture future = bootstrap.bind(host, port).sync();
         serverChannel = future.channel();
 
-        LOGGER.info("WebSocket server started on {}:{}", host, port);
+        LOGGER.info("{} server started on {}:{}", TYPE, host, port);
     }
 
+    @Override
     public void stop() {
-        LOGGER.info("Stopping WebSocket server...");
+        LOGGER.info("Stopping {} server...", TYPE);
 
         if (serverChannel != null) {
             serverChannel.close();
@@ -66,10 +70,21 @@ public class WebSocketGameServer {
             bossGroup.shutdownGracefully();
         }
 
-        LOGGER.info("WebSocket server stopped");
+        LOGGER.info("{} server stopped", TYPE);
     }
 
+    @Override
     public boolean isRunning() {
         return serverChannel != null && serverChannel.isActive();
+    }
+
+    @Override
+    public int getPort() {
+        return port;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 }

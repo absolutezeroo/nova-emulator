@@ -1,4 +1,4 @@
-package com.nova.infra.adapter.in.network;
+package com.nova.infra.adapter.in.network.codec;
 
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 

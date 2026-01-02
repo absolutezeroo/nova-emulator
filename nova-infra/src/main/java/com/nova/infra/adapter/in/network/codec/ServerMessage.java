@@ -1,4 +1,4 @@
-package com.nova.infra.adapter.in.network;
+package com.nova.infra.adapter.in.network.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -33,28 +33,34 @@ public class ServerMessage {
 
     public ServerMessage appendInt(int value) {
         body.writeInt(value);
+
         return this;
     }
 
     public ServerMessage appendShort(int value) {
         body.writeShort(value);
+
         return this;
     }
 
     public ServerMessage appendBoolean(boolean value) {
         body.writeByte(value ? 1 : 0);
+
         return this;
     }
 
     public ServerMessage appendString(String value) {
         byte[] data = value.getBytes(StandardCharsets.UTF_8);
+
         body.writeShort(data.length);
         body.writeBytes(data);
+
         return this;
     }
 
     public ServerMessage appendBytes(byte[] data) {
         body.writeBytes(data);
+
         return this;
     }
 

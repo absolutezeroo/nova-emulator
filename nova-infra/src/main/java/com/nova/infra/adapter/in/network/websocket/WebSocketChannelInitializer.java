@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.in.network.websocket;
 
-import com.nova.infra.adapter.in.network.GamePacketEncoder;
+import com.nova.infra.adapter.in.network.codec.GamePacketEncoder;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
