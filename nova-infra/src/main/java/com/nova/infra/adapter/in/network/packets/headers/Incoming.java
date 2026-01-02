@@ -1,4 +1,4 @@
-package com.nova.infra.adapter.in.network.handler.packet;
+package com.nova.infra.adapter.in.network.packets.headers;
 
 /**
  * Constants for incoming packet Header IDs.
@@ -9,7 +9,7 @@ package com.nova.infra.adapter.in.network.handler.packet;
 public final class Incoming {
 
     private Incoming() {
-        // Utility class - no instantiation
+        // Utility class
     }
 
     // === Handshake & Authentication ===
@@ -23,6 +23,9 @@ public final class Incoming {
     /** SSO ticket authentication */
     public static final int SSO_TICKET = 2419;
 
+    /** Client pong (ping response) */
+    public static final int CLIENT_PONG = 2596;
+
     /** Encryption initialization */
     public static final int INIT_CRYPTO = 3110;
 
@@ -32,13 +35,13 @@ public final class Incoming {
     // === User Info ===
 
     /** Request user info */
-    public static final int INFO_RETRIEVE = 357;
+    public static final int USER_INFO = 357;
 
     /** Request user credits */
     public static final int USER_CREDITS = 273;
 
     /** Request user subscription status */
-    public static final int USER_SUBSCRIPTION = 2108;
+    public static final int USER_SUBSCRIPTION = 3166;
 
     // === Navigator ===
 

@@ -1,8 +1,6 @@
 package com.nova.infra.adapter.in.network.websocket;
 
-import com.nova.infra.adapter.in.network.codec.GamePacketEncoder;
-import com.nova.infra.adapter.in.network.codec.MessageEncoder;
-import com.nova.infra.adapter.in.network.handler.packet.PacketManager;
+import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -20,7 +18,6 @@ import org.slf4j.LoggerFactory;
  * 2. HttpObjectAggregator - Aggregates HTTP message parts
  * 3. WebSocketServerProtocolHandler - Handles WebSocket upgrade and framing
  * 4. WebSocketFrameHandler - Bridges WebSocket frames to game packet handlers
- * 5. GamePacketEncoder - Encodes outbound ServerMessage packets
  */
 public class WebSocketChannelInitializer extends ChannelInitializer<SocketChannel> {
 
@@ -29,12 +26,10 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
     private static final String WEBSOCKET_PATH = "/";
     private static final int MAX_CONTENT_LENGTH = 65536;
 
-    private final PacketManager packetManager;
-    private final MessageEncoder messageEncoder;
+    private final PacketDispatcher packetDispatcher;
 
-    public WebSocketChannelInitializer(PacketManager packetManager, MessageEncoder messageEncoder) {
-        this.packetManager = packetManager;
-        this.messageEncoder = messageEncoder;
+    public WebSocketChannelInitializer(PacketDispatcher packetDispatcher) {
+        this.packetDispatcher = packetDispatcher;
     }
 
     @Override
@@ -49,10 +44,7 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
         pipeline.addLast("wsProtocol", new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
 
         // Bridge WebSocket frames to game packet handlers
-        pipeline.addLast("wsFrameHandler", new WebSocketFrameHandler(packetManager, messageEncoder));
-
-        // Outbound encoder for ServerMessage
-        pipeline.addLast("packetEncoder", new GamePacketEncoder());
+        pipeline.addLast("wsFrameHandler", new WebSocketFrameHandler(packetDispatcher));
 
         LOGGER.debug("Initialized WebSocket channel pipeline for {}", ch.remoteAddress());
     }

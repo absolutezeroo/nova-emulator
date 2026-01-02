@@ -6,11 +6,19 @@ import com.google.inject.Singleton;
 import com.nova.core.domain.port.in.UserUseCase;
 import com.nova.core.domain.port.out.SessionRepository;
 import com.nova.core.domain.port.out.UserRepository;
-import com.nova.infra.adapter.in.network.codec.MessageEncoder;
-import com.nova.infra.adapter.in.network.codec.PassthroughMessageEncoder;
-import com.nova.infra.adapter.in.network.handler.packet.Incoming;
-import com.nova.infra.adapter.in.network.handler.packet.PacketManager;
-import com.nova.infra.adapter.in.network.handler.packet.handlers.SsoLoginHandler;
+import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
+import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;
+import com.nova.infra.adapter.in.network.packets.composers.handshake.AuthenticatedComposer;
+import com.nova.infra.adapter.in.network.packets.composers.users.UserCreditsComposer;
+import com.nova.infra.adapter.in.network.packets.composers.users.UserInfoComposer;
+import com.nova.infra.adapter.in.network.packets.handlers.PacketHandlerManager;
+import com.nova.infra.adapter.in.network.packets.handlers.handshake.SsoTicketHandler;
+import com.nova.infra.adapter.in.network.packets.incoming.handshake.SsoTicketMessageEvent;
+import com.nova.infra.adapter.in.network.packets.outgoing.handshake.AuthenticatedMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.users.UserCreditsMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.users.UserInfoMessage;
+import com.nova.infra.adapter.in.network.packets.parsers.PacketParserManager;
+import com.nova.infra.adapter.in.network.packets.parsers.handshake.SsoTicketParser;
 import com.nova.infra.adapter.in.network.server.GameChannelInitializer;
 import com.nova.infra.adapter.in.network.server.GameServer;
 import com.nova.infra.adapter.in.network.websocket.WebSocketChannelInitializer;
@@ -24,7 +32,7 @@ import com.zaxxer.hikari.HikariDataSource;
  * Guice module for Infrastructure layer bindings.
  * <p>
  * Binds output ports to their adapter implementations.
- * Configures infrastructure components (database, network, packet routing).
+ * Configures infrastructure components (database, network, packet system).
  */
 public class InfrastructureModule extends AbstractModule {
 
@@ -44,9 +52,6 @@ public class InfrastructureModule extends AbstractModule {
     protected void configure() {
         // Bind Output Ports to Adapter implementations
         bind(SessionRepository.class).to(InMemorySessionRepository.class).in(Singleton.class);
-
-        // Bind MessageEncoder
-        bind(MessageEncoder.class).to(PassthroughMessageEncoder.class).in(Singleton.class);
     }
 
     @Provides
@@ -64,28 +69,69 @@ public class InfrastructureModule extends AbstractModule {
         return new MySqlUserRepository(dataSource);
     }
 
+    // === Packet System ===
+
     @Provides
     @Singleton
-    public PacketManager providePacketManager(UserUseCase userUseCase) {
-        PacketManager packetManager = new PacketManager();
+    public PacketParserManager provideParserManager() {
+        PacketParserManager manager = new PacketParserManager();
 
-        // Register packet handlers
-        packetManager.register(Incoming.SSO_TICKET, new SsoLoginHandler(userUseCase));
+        // Register parsers
+        manager.register(new SsoTicketParser());
 
-        return packetManager;
+        return manager;
     }
 
     @Provides
     @Singleton
-    public GameServer provideGameServer(PacketManager packetManager, MessageEncoder messageEncoder) {
-        GameChannelInitializer initializer = new GameChannelInitializer(packetManager, messageEncoder);
+    public PacketComposerManager provideComposerManager() {
+        PacketComposerManager manager = new PacketComposerManager();
+
+        // Register composers
+        manager.register(AuthenticatedMessage.class, new AuthenticatedComposer());
+        manager.register(UserInfoMessage.class, new UserInfoComposer());
+        manager.register(UserCreditsMessage.class, new UserCreditsComposer());
+
+        return manager;
+    }
+
+    @Provides
+    @Singleton
+    public PacketHandlerManager provideHandlerManager(
+            UserUseCase userUseCase,
+            PacketComposerManager composerManager) {
+
+        PacketHandlerManager manager = new PacketHandlerManager();
+
+        // Register handlers
+        manager.register(SsoTicketMessageEvent.class, new SsoTicketHandler(userUseCase, composerManager));
+
+        return manager;
+    }
+
+    @Provides
+    @Singleton
+    public PacketDispatcher providePacketDispatcher(
+            PacketParserManager parserManager,
+            PacketHandlerManager handlerManager,
+            PacketComposerManager composerManager) {
+
+        return new PacketDispatcher(parserManager, handlerManager, composerManager);
+    }
+
+    // === Network Servers ===
+
+    @Provides
+    @Singleton
+    public GameServer provideGameServer(PacketDispatcher packetDispatcher) {
+        GameChannelInitializer initializer = new GameChannelInitializer(packetDispatcher);
         return new GameServer(GAME_HOST, GAME_PORT, initializer);
     }
 
     @Provides
     @Singleton
-    public WebSocketGameServer provideWebSocketGameServer(PacketManager packetManager, MessageEncoder messageEncoder) {
-        WebSocketChannelInitializer initializer = new WebSocketChannelInitializer(packetManager, messageEncoder);
+    public WebSocketGameServer provideWebSocketGameServer(PacketDispatcher packetDispatcher) {
+        WebSocketChannelInitializer initializer = new WebSocketChannelInitializer(packetDispatcher);
         return new WebSocketGameServer(GAME_HOST, WEBSOCKET_PORT, initializer);
     }
 }

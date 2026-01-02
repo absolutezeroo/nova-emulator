@@ -1,4 +1,4 @@
-package com.nova.infra.adapter.in.network.handler.packet;
+package com.nova.infra.adapter.in.network.packets.headers;
 
 /**
  * Constants for outgoing packet Header IDs.
@@ -9,13 +9,13 @@ package com.nova.infra.adapter.in.network.handler.packet;
 public final class Outgoing {
 
     private Outgoing() {
-        // Utility class - no instantiation
+        // Utility class
     }
 
     // === Handshake & Authentication ===
 
     /** Authentication successful */
-    public static final int AUTH_OK = 2491;
+    public static final int AUTHENTICATED = 2491;
 
     /** Unique ID registered */
     public static final int UNIQUE_ID_STATUS = 1488;
@@ -29,10 +29,16 @@ public final class Outgoing {
     /** Session parameters */
     public static final int SESSION_PARAMS = 2031;
 
+    /** Client ping */
+    public static final int CLIENT_PING = 3928;
+
+    /** Authentication failed */
+    public static final int AUTH_FAILED = 169;
+
     // === User Info ===
 
     /** User object data */
-    public static final int USER_OBJECT = 2725;
+    public static final int USER_INFO = 2725;
 
     /** User home room */
     public static final int USER_HOME_ROOM = 2875;
@@ -49,7 +55,16 @@ public final class Outgoing {
     /** User data */
     public static final int USER_DATA = 3023;
 
+    /** User figure update */
+    public static final int USER_FIGURE = 2429;
+
+    /** Noobness level */
+    public static final int NOOBNESS_LEVEL = 3738;
+
     // === Navigator ===
+
+    /** Navigator settings */
+    public static final int NAVIGATOR_SETTINGS = 518;
 
     /** Navigator metadata */
     public static final int NAVIGATOR_METADATA = 3052;
@@ -118,7 +133,4 @@ public final class Outgoing {
 
     /** Generic error */
     public static final int GENERIC_ERROR = 4000;
-
-    /** Authentication failed */
-    public static final int AUTH_FAILED = 169;
 }

@@ -2,8 +2,7 @@ package com.nova.infra.adapter.in.network.websocket;
 
 import com.nova.core.domain.port.out.network.NetworkConnection;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
-import com.nova.infra.adapter.in.network.codec.MessageEncoder;
-import com.nova.infra.adapter.in.network.handler.packet.PacketManager;
+import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
 import com.nova.infra.adapter.in.network.session.NettyConnection;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -28,18 +27,16 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketFrameHandler.class);
 
-    private final PacketManager packetManager;
-    private final MessageEncoder messageEncoder;
+    private final PacketDispatcher packetDispatcher;
 
-    public WebSocketFrameHandler(PacketManager packetManager, MessageEncoder messageEncoder) {
-        this.packetManager = packetManager;
-        this.messageEncoder = messageEncoder;
+    public WebSocketFrameHandler(PacketDispatcher packetDispatcher) {
+        this.packetDispatcher = packetDispatcher;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // Create NetworkConnection wrapper for this channel
-        NettyConnection connection = new NettyConnection(ctx.channel(), messageEncoder);
+        NettyConnection connection = new NettyConnection(ctx.channel());
 
         LOGGER.info("WebSocket client connected: {} (session: {})",
                 connection.getIpAddress(), connection.getId());
@@ -103,7 +100,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
         }
 
         try {
-            boolean handled = packetManager.handle(connection, message);
+            boolean handled = packetDispatcher.dispatch(connection, message);
 
             if (!handled) {
                 LOGGER.debug("Unhandled packet ID {} from {}",

@@ -1,7 +1,7 @@
 package com.nova.infra.adapter.in.network.session;
 
 import com.nova.core.domain.port.out.network.NetworkConnection;
-import com.nova.infra.adapter.in.network.codec.MessageEncoder;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Responsibilities:
  * - Wrap Netty Channel for send/disconnect operations
- * - Convert domain response objects to wire format via MessageEncoder
+ * - Send ByteBuf packets directly to the client
  * - Store connection attributes (authenticated user, session data)
  */
 public class NettyConnection implements NetworkConnection {
@@ -31,15 +31,13 @@ public class NettyConnection implements NetworkConnection {
     private final String id;
     private final Channel channel;
     private final Map<String, Object> attributes;
-    private final MessageEncoder messageEncoder;
 
-    public NettyConnection(Channel channel, MessageEncoder messageEncoder) {
+    public NettyConnection(Channel channel) {
         this.id = UUID.randomUUID().toString();
         this.channel = channel;
         this.attributes = new ConcurrentHashMap<>();
-        this.messageEncoder = messageEncoder;
 
-        // Store reference in a channel for later retrieval
+        // Store reference in channel for later retrieval
         channel.attr(CONNECTION_KEY).set(this);
     }
 
@@ -70,17 +68,19 @@ public class NettyConnection implements NetworkConnection {
     public void send(Object response) {
         if (!isConnected()) {
             LOGGER.warn("Attempted to send to disconnected client: {}", id);
-
             return;
         }
 
         try {
-            // Convert domain response to wire format
-            Object encoded = messageEncoder.encode(response);
-
-            channel.writeAndFlush(encoded);
-
-            LOGGER.debug("Sent response to {}: {}", id, response.getClass().getSimpleName());
+            // ByteBuf can be sent directly (from PacketBuffer.getBuffer())
+            if (response instanceof ByteBuf byteBuf) {
+                channel.writeAndFlush(byteBuf);
+                LOGGER.debug("Sent packet to {} ({} bytes)", id, byteBuf.readableBytes());
+            } else {
+                // For other types, just write directly (let encoder handle)
+                channel.writeAndFlush(response);
+                LOGGER.debug("Sent response to {}: {}", id, response.getClass().getSimpleName());
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to send response to {}: {}", id, e.getMessage());
         }

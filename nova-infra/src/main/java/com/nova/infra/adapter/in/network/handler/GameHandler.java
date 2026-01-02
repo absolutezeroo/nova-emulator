@@ -2,8 +2,7 @@ package com.nova.infra.adapter.in.network.handler;
 
 import com.nova.core.domain.port.out.network.NetworkConnection;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
-import com.nova.infra.adapter.in.network.codec.MessageEncoder;
-import com.nova.infra.adapter.in.network.handler.packet.PacketManager;
+import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
 import com.nova.infra.adapter.in.network.session.NettyConnection;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -15,27 +14,25 @@ import org.slf4j.LoggerFactory;
  * <p>
  * This handler:
  * 1. Creates a {@link NettyConnection} wrapper on client connect
- * 2. Routes incoming packets to the {@link PacketManager}
+ * 2. Routes incoming packets to the {@link PacketDispatcher}
  * 3. Cleans up resources on disconnect
  * <p>
- * This is the bridge between Netty (infrastructure) and the packet routing system.
+ * This is the bridge between Netty (infrastructure) and the packet system.
  */
 public class GameHandler extends SimpleChannelInboundHandler<ClientMessage> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GameHandler.class);
 
-    private final PacketManager packetManager;
-    private final MessageEncoder messageEncoder;
+    private final PacketDispatcher packetDispatcher;
 
-    public GameHandler(PacketManager packetManager, MessageEncoder messageEncoder) {
-        this.packetManager = packetManager;
-        this.messageEncoder = messageEncoder;
+    public GameHandler(PacketDispatcher packetDispatcher) {
+        this.packetDispatcher = packetDispatcher;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // Create NetworkConnection wrapper for this channel
-        NettyConnection connection = new NettyConnection(ctx.channel(), messageEncoder);
+        NettyConnection connection = new NettyConnection(ctx.channel());
 
         LOGGER.info("Client connected: {} (session: {})",
                 connection.getIpAddress(), connection.getId());
@@ -73,8 +70,8 @@ public class GameHandler extends SimpleChannelInboundHandler<ClientMessage> {
                 connection.getIpAddress(), msg.getHeaderId());
 
         try {
-            // Route packet to appropriate handler
-            boolean handled = packetManager.handle(connection, msg);
+            // Dispatch packet through parser → handler chain
+            boolean handled = packetDispatcher.dispatch(connection, msg);
 
             if (!handled) {
                 LOGGER.debug("Unhandled packet ID {} from {}",
