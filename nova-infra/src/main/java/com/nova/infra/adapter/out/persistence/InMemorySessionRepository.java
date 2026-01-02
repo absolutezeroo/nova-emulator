@@ -24,6 +24,12 @@ public class InMemorySessionRepository implements SessionRepository {
     private final Map<UserId, String> userToSession = new ConcurrentHashMap<>();
 
     @Override
+    public void register(User user) {
+        onlineUsers.put(user.getId(), user);
+        LOGGER.info("User {} registered (pending session binding)", user.getUsername());
+    }
+
+    @Override
     public void register(User user, String sessionId) {
         onlineUsers.put(user.getId(), user);
         sessionToUser.put(sessionId, user.getId());

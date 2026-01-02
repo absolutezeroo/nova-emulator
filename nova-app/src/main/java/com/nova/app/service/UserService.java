@@ -1,6 +1,11 @@
 package com.nova.app.service;
 
 import com.google.inject.Inject;
+import com.nova.core.application.command.AuthenticateCommand;
+import com.nova.core.application.result.AuthenticationResult;
+import com.nova.core.application.result.AuthenticationResult.Failure;
+import com.nova.core.application.result.AuthenticationResult.FailureReason;
+import com.nova.core.application.result.AuthenticationResult.Success;
 import com.nova.core.domain.model.User;
 import com.nova.core.domain.model.UserId;
 import com.nova.core.domain.port.in.UserUseCase;
@@ -14,7 +19,7 @@ import java.util.Optional;
 
 /**
  * Application Service implementing UserUseCase.
- *
+ * <p>
  * Orchestrates domain logic by coordinating between
  * domain entities and output ports (repositories).
  */
@@ -32,26 +37,36 @@ public class UserService implements UserUseCase {
     }
 
     @Override
-    public Optional<User> authenticate(String ssoTicket) {
+    public AuthenticationResult authenticate(AuthenticateCommand command) {
         LOGGER.debug("Authenticating user with SSO ticket");
 
-        Optional<User> userOpt = userRepository.findBySsoTicket(ssoTicket);
+        Optional<User> userOpt = userRepository.findBySsoTicket(command.ssoTicket());
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-
-            // Invalidate ticket for security (single use)
-            userRepository.invalidateSsoTicket(ssoTicket);
-
-            // Mark user as online
-            user.markOnline();
-
-            LOGGER.info("User {} authenticated successfully", user.getUsername());
-            return Optional.of(user);
+        if (userOpt.isEmpty()) {
+            LOGGER.warn("Authentication failed: invalid SSO ticket");
+            return new Failure(FailureReason.INVALID_TICKET);
         }
 
-        LOGGER.warn("Authentication failed: invalid SSO ticket");
-        return Optional.empty();
+        User user = userOpt.get();
+
+        // Invalidate ticket for security (single use)
+        userRepository.invalidateSsoTicket(command.ssoTicket());
+
+        // Register in session repository
+        sessionRepository.register(user);
+
+        // Mark user as online
+        user.markOnline();
+
+        LOGGER.info("User {} authenticated successfully", user.getUsername());
+        return new Success(user);
+    }
+
+    @Override
+    @Deprecated(forRemoval = true)
+    public Optional<User> authenticate(String ssoTicket) {
+        AuthenticationResult result = authenticate(new AuthenticateCommand(ssoTicket));
+        return result.getUser();
     }
 
     @Override

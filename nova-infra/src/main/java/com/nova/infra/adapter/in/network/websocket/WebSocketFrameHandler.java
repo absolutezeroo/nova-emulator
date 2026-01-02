@@ -1,6 +1,10 @@
 package com.nova.infra.adapter.in.network.websocket;
 
+import com.nova.core.domain.port.out.network.NetworkConnection;
 import com.nova.infra.adapter.in.network.codec.ClientMessage;
+import com.nova.infra.adapter.in.network.codec.MessageEncoder;
+import com.nova.infra.adapter.in.network.handler.packet.PacketManager;
+import com.nova.infra.adapter.in.network.session.NettyConnection;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -24,15 +28,36 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketFrameHandler.class);
 
+    private final PacketManager packetManager;
+    private final MessageEncoder messageEncoder;
+
+    public WebSocketFrameHandler(PacketManager packetManager, MessageEncoder messageEncoder) {
+        this.packetManager = packetManager;
+        this.messageEncoder = messageEncoder;
+    }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        LOGGER.info("WebSocket client connected: {}", ctx.channel().remoteAddress());
+        // Create NetworkConnection wrapper for this channel
+        NettyConnection connection = new NettyConnection(ctx.channel(), messageEncoder);
+
+        LOGGER.info("WebSocket client connected: {} (session: {})",
+                connection.getIpAddress(), connection.getId());
+
         super.channelActive(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        LOGGER.info("WebSocket client disconnected: {}", ctx.channel().remoteAddress());
+        NetworkConnection connection = NettyConnection.fromChannel(ctx.channel());
+
+        if (connection != null) {
+            LOGGER.info("WebSocket client disconnected: {} (session: {})",
+                    connection.getIpAddress(), connection.getId());
+        } else {
+            LOGGER.info("WebSocket client disconnected: {}", ctx.channel().remoteAddress());
+        }
+
         super.channelInactive(ctx);
     }
 
@@ -64,17 +89,26 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
 
         LOGGER.debug("WebSocket packet received: headerId={}, bodyLength={}", headerId, body.readableBytes());
 
-        // Process the message directly
+        // Process the message
         processMessage(ctx, message);
     }
 
     private void processMessage(ChannelHandlerContext ctx, ClientMessage message) {
+        NetworkConnection connection = NettyConnection.fromChannel(ctx.channel());
+
+        if (connection == null) {
+            LOGGER.error("No connection found for channel, dropping packet");
+            message.release();
+            return;
+        }
+
         try {
-            LOGGER.debug("Processing packet from {}: headerId={}", ctx.channel().remoteAddress(), message.getHeaderId());
+            boolean handled = packetManager.handle(connection, message);
 
-            // TODO: Route packet to appropriate handler based on headerId
-            // Example: packetManager.handle(ctx.channel(), message);
-
+            if (!handled) {
+                LOGGER.debug("Unhandled packet ID {} from {}",
+                        message.getHeaderId(), connection.getIpAddress());
+            }
         } finally {
             message.release();
         }
@@ -82,7 +116,10 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        LOGGER.error("WebSocket error from {}: {}", ctx.channel().remoteAddress(), cause.getMessage(), cause);
+        NetworkConnection connection = NettyConnection.fromChannel(ctx.channel());
+        String clientInfo = connection != null ? connection.getIpAddress() : ctx.channel().remoteAddress().toString();
+
+        LOGGER.error("WebSocket error from {}: {}", clientInfo, cause.getMessage(), cause);
         ctx.close();
     }
 }

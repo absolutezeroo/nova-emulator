@@ -15,7 +15,14 @@ import java.util.Optional;
 public interface SessionRepository {
 
     /**
-     * Registers a user as online.
+     * Registers a user as online (session ID will be assigned later).
+     *
+     * @param user The user to register
+     */
+    void register(User user);
+
+    /**
+     * Registers a user as online with a specific session ID.
      *
      * @param user The user to register
      * @param sessionId The network session ID

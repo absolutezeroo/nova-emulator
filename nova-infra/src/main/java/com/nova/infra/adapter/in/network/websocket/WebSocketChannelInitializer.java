@@ -1,6 +1,8 @@
 package com.nova.infra.adapter.in.network.websocket;
 
 import com.nova.infra.adapter.in.network.codec.GamePacketEncoder;
+import com.nova.infra.adapter.in.network.codec.MessageEncoder;
+import com.nova.infra.adapter.in.network.handler.packet.PacketManager;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -27,6 +29,14 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
     private static final String WEBSOCKET_PATH = "/";
     private static final int MAX_CONTENT_LENGTH = 65536;
 
+    private final PacketManager packetManager;
+    private final MessageEncoder messageEncoder;
+
+    public WebSocketChannelInitializer(PacketManager packetManager, MessageEncoder messageEncoder) {
+        this.packetManager = packetManager;
+        this.messageEncoder = messageEncoder;
+    }
+
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
@@ -39,7 +49,7 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
         pipeline.addLast("wsProtocol", new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
 
         // Bridge WebSocket frames to game packet handlers
-        pipeline.addLast("wsFrameHandler", new WebSocketFrameHandler());
+        pipeline.addLast("wsFrameHandler", new WebSocketFrameHandler(packetManager, messageEncoder));
 
         // Outbound encoder for ServerMessage
         pipeline.addLast("packetEncoder", new GamePacketEncoder());

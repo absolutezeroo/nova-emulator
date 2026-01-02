@@ -3,8 +3,10 @@ package com.nova.infra.adapter.in.network.server;
 import com.nova.infra.adapter.in.network.codec.GameByteFrameDecoder;
 import com.nova.infra.adapter.in.network.codec.GamePacketDecoder;
 import com.nova.infra.adapter.in.network.codec.GamePacketEncoder;
+import com.nova.infra.adapter.in.network.codec.MessageEncoder;
 import com.nova.infra.adapter.in.network.handler.GameHandler;
 import com.nova.infra.adapter.in.network.handler.PolicyFileHandler;
+import com.nova.infra.adapter.in.network.handler.packet.PacketManager;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -25,6 +27,14 @@ public class GameChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GameChannelInitializer.class);
 
+    private final PacketManager packetManager;
+    private final MessageEncoder messageEncoder;
+
+    public GameChannelInitializer(PacketManager packetManager, MessageEncoder messageEncoder) {
+        this.packetManager = packetManager;
+        this.messageEncoder = messageEncoder;
+    }
+
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
@@ -38,7 +48,7 @@ public class GameChannelInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast("packetEncoder", new GamePacketEncoder());
 
         // Final handler
-        pipeline.addLast("handler", new GameHandler());
+        pipeline.addLast("handler", new GameHandler(packetManager, messageEncoder));
 
         LOGGER.debug("Initialized TCP channel pipeline for {}", ch.remoteAddress());
     }
