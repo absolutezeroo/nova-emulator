@@ -84,17 +84,22 @@ nova-infra/
     ├── adapter/
     │   ├── in/             # Inbound Adapters (drive the application)
     │   │   └── network/
-    │   │       ├── codec/                       # Packet encoding/decoding
+    │   │       ├── codec/                       # Netty codecs
     │   │       │   ├── ClientMessage.java           # Inbound packet DTO
-    │   │       │   ├── ServerMessage.java           # Outbound packet DTO
-    │   │       │   ├── MessageEncoder.java          # Domain→Wire interface
-    │   │       │   ├── MessageDecoder.java          # Wire→Domain interface
     │   │       │   ├── GameByteFrameDecoder.java    # 4-byte length framing
-    │   │       │   ├── GamePacketDecoder.java       # Packet decoder
-    │   │       │   └── GamePacketEncoder.java       # Packet encoder
+    │   │       │   └── GamePacketDecoder.java       # Packet decoder
     │   │       ├── handler/                     # Netty handlers
-    │   │       │   ├── GameHandler.java             # Packet processor
+    │   │       │   ├── GameHandler.java             # Routes to PacketDispatcher
     │   │       │   └── PolicyFileHandler.java       # Flash policy XML
+    │   │       ├── packets/                     # Packet handling system
+    │   │       │   ├── IIncomingPacket.java         # Marker interface
+    │   │       │   ├── IOutgoingPacket.java         # Marker interface
+    │   │       │   ├── PacketDispatcher.java        # Central dispatcher
+    │   │       │   ├── parsers/                     # Bytes → Typed events
+    │   │       │   ├── handlers/                    # Events → Use cases
+    │   │       │   ├── composers/                   # Messages → Bytes
+    │   │       │   ├── incoming/                    # Incoming event DTOs
+    │   │       │   └── outgoing/                    # Outgoing message DTOs
     │   │       ├── session/                     # Connection management
     │   │       │   └── NettyConnection.java         # Implements NetworkConnection
     │   │       ├── server/                      # TCP server

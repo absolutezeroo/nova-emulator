@@ -59,11 +59,12 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, BinaryWebSocketFrame frame) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, BinaryWebSocketFrame frame) {
         ByteBuf content = frame.content();
 
         if (content.readableBytes() < 6) {
             LOGGER.warn("Received WebSocket frame too small: {} bytes", content.readableBytes());
+
             return;
         }
 
@@ -73,8 +74,10 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
 
         // Validate length
         int expectedBodyLength = length - 2; // length includes header ID (2 bytes)
+
         if (content.readableBytes() < expectedBodyLength) {
             LOGGER.warn("Incomplete packet: expected {} bytes, got {}", expectedBodyLength, content.readableBytes());
+
             return;
         }
 
@@ -95,7 +98,9 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
 
         if (connection == null) {
             LOGGER.error("No connection found for channel, dropping packet");
+
             message.release();
+
             return;
         }
 

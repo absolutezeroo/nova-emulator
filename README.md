@@ -52,8 +52,9 @@ nova-emulator/
 │       └── out/         # Output ports (Repositories, NetworkConnection, GameServerPort)
 ├── nova-infra/          # Infrastructure (Netty servers, MySQL repositories)
 │   └── adapter/in/network/
-│       ├── codec/       # Packet encoding/decoding
+│       ├── codec/       # Netty codecs (ClientMessage, decoders)
 │       ├── handler/     # Netty handlers (GameHandler, PolicyFileHandler)
+│       ├── packets/     # Packet system (parsers, handlers, composers)
 │       ├── session/     # Connection management (NettyConnection)
 │       ├── server/      # TCP server (GameServer, GameChannelInitializer)
 │       └── websocket/   # WebSocket server

@@ -60,6 +60,7 @@ public class InMemorySessionRepository implements SessionRepository {
     @Override
     public Optional<User> findBySessionId(String sessionId) {
         UserId userId = sessionToUser.get(sessionId);
+
         return userId != null ? Optional.ofNullable(onlineUsers.get(userId)) : Optional.empty();
     }
 
