@@ -63,6 +63,12 @@
             <artifactId>classgraph</artifactId>
         </dependency>
 
+        <!-- Dependency Injection - JSR-330 Standard (framework-agnostic) -->
+        <dependency>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.mockito</groupId>
