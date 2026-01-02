@@ -479,3 +479,167 @@ Easily swap implementations:
 - Replace MySQL with PostgreSQL: new `PostgresUserRepository` implementing `UserRepository`
 - Add REST API: new inbound adapter calling existing use cases
 - Add caching: decorator pattern around repository implementations
+
+## Threading Model
+
+### Current State (Stateless Operations)
+
+For stateless operations (authentication, catalogue browsing, messenger), the current flow is thread-safe:
+
+```
+Netty EventLoop Thread → GameHandler → PacketDispatcher → Handler → UseCase
+```
+
+Each client has its own `NetworkConnection` and `User` object. No shared mutable state = no concurrency issues.
+
+### Future: Shared State Operations (Rooms, Trades, Games)
+
+When implementing features with shared mutable state, a **striped executor pattern** must be used to ensure thread-safety without blocking Netty's EventLoop threads.
+
+#### Problem Scenario
+
+```
+EventLoop-1 (Alice)              EventLoop-2 (Bob)
+      │                                │
+      ▼                                ▼
+moveItem(room=42, item=100)      moveItem(room=42, item=100)
+      │                                │
+      └────────── RACE CONDITION ──────┘
+                       │
+              Room state corrupted
+```
+
+#### Solution: RoomTaskScheduler
+
+```
+nova-core/domain/port/in/RoomTaskScheduler.java     # Interface (port)
+nova-infra/.../concurrency/StripedRoomTaskScheduler.java  # Implementation
+```
+
+**Interface:**
+```java
+public interface RoomTaskScheduler {
+    /**
+     * Executes a task for a specific room.
+     * Tasks for the same room run sequentially (FIFO).
+     * Tasks for different rooms may run in parallel.
+     */
+    void execute(int roomId, Runnable task);
+
+    <T> CompletableFuture<T> submit(int roomId, Supplier<T> task);
+
+    void shutdown();
+}
+```
+
+**Flow with scheduler:**
+```
+EventLoop-1 (Alice)              EventLoop-2 (Bob)
+      │                                │
+      ▼                                ▼
+Handler.handle()                 Handler.handle()
+      │                                │
+      └──► scheduler.execute(roomId=42, task) ◄──┘
+                       │
+                       ▼
+            ┌─────────────────────┐
+            │  Room-42 TaskQueue  │
+            │  [Alice's task]     │  ← Sequential execution
+            │  [Bob's task]       │
+            └─────────────────────┘
+                       │
+                       ▼
+              Stripe-Thread-X
+                       │
+                       ▼
+            1. Execute Alice's task
+            2. Execute Bob's task
+            (Never in parallel)
+```
+
+#### Implementation Guidelines
+
+**Handlers WITHOUT shared state** (direct execution on EventLoop):
+- `SsoTicketHandler` - Authentication
+- `CatalogueHandler` - Read-only catalogue browsing
+- `MessengerHandler` - Private messages (per-user state)
+- `NavigatorHandler` - Room list browsing
+
+**Handlers WITH shared state** (must use RoomTaskScheduler):
+- `RoomItemHandler` - Move, rotate, pickup items
+- `RoomUserHandler` - Walk, sit, dance, chat
+- `TradeHandler` - Trading between users
+- `GameHandler` - Wired, Battle Banzai, Freeze
+
+**Example handler with scheduler:**
+```java
+public class RoomItemMoveHandler implements PacketHandler<MoveItemEvent> {
+
+    private final RoomTaskScheduler scheduler;
+    private final RoomUseCase roomUseCase;
+
+    @Override
+    public void handle(NetworkConnection conn, MoveItemEvent event) {
+        // Returns immediately - non-blocking for EventLoop
+        scheduler.execute(event.roomId(), () -> {
+            // Executed on dedicated stripe thread
+            // Only one task per room at a time
+            roomUseCase.moveItem(event.roomId(), event.itemId(), event.x(), event.y());
+        });
+    }
+}
+```
+
+#### Why NOT synchronized?
+
+```java
+// ❌ BAD - Blocks Netty EventLoop thread
+public synchronized void moveItem(...) {
+    // If this takes 50ms, ALL clients on this EventLoop are frozen
+}
+
+// ✅ GOOD - EventLoop returns immediately
+scheduler.execute(roomId, () -> {
+    // Blocking here is OK - it's a dedicated worker thread
+    moveItem(...);
+});
+```
+
+#### Stripe Count Recommendation
+
+```java
+// Recommended: CPU cores count
+int stripeCount = Runtime.getRuntime().availableProcessors();
+RoomTaskScheduler scheduler = new StripedRoomTaskScheduler(stripeCount);
+```
+
+- 4-core CPU → 4 stripes → Up to 4 rooms processed in parallel
+- Rooms are mapped to stripes via `roomId % stripeCount`
+- Same room always maps to same stripe → sequential execution guaranteed
+
+## Memory Management
+
+### ByteBuf Pooling
+
+Always use Netty's pooled allocator for packet buffers:
+
+```java
+// ✅ GOOD - Uses Netty's buffer pool
+PooledByteBufAllocator.DEFAULT.buffer(256)
+
+// ❌ BAD - Allocates on heap every time
+Unpooled.buffer()
+```
+
+`PacketBuffer` already uses `PooledByteBufAllocator` internally.
+
+### Object Lifecycle
+
+| Component | Lifecycle | Notes |
+|-----------|-----------|-------|
+| PacketParser | Singleton | Stateless, reused for all packets |
+| PacketHandler | Singleton | Holds injected dependencies only |
+| PacketComposer | Singleton | Stateless, reused for all packets |
+| IIncomingPacket | Per-request | Short-lived DTO, GC-friendly |
+| IOutgoingPacket | Per-request | Short-lived DTO, GC-friendly |
+| PacketBuffer | Per-response | Uses pooled ByteBuf, recycled automatically |
