@@ -25,10 +25,4 @@ public record UserSettingsEntity(
         int talentTrackCitizenship,
         int talentTrackHelper
 ) {
-    public static UserSettingsEntity defaults(int userId) {
-        return new UserSettingsEntity(
-                userId, 100, 100, 100, false, true, true, true, true, true,
-                100, 100, 425, 535, false, false, 0, 0
-        );
-    }
 }

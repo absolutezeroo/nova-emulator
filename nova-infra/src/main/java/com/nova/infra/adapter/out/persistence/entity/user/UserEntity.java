@@ -16,7 +16,4 @@ public record UserEntity(
         int rankId,
         Instant createdAt
 ) {
-    public static UserEntity minimal(int id, String username) {
-        return new UserEntity(id, username, "", "", 1, Instant.now());
-    }
 }

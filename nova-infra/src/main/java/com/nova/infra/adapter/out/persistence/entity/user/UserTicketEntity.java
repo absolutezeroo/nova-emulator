@@ -17,9 +17,4 @@ public record UserTicketEntity(
         Instant usedAt,
         boolean isUsed
 ) {
-    public boolean isValid() {
-        if (isUsed) return false;
-        if (expiresAt == null) return true;
-        return Instant.now().isBefore(expiresAt);
-    }
 }

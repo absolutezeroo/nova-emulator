@@ -31,7 +31,7 @@
 | Outgoing Messages (DTOs)    | ✅ Complete       | **447 files**                   |
 | Parsers (auto-registered)   | ✅ Complete       | **~457 parsers**                |
 | Composers (auto-registered) | ✅ Complete       | **~447 composers**              |
-| Handlers (business logic)   | ⚠️ **1 of ~50+** | Only `SsoTicketHandler`         |
+| Handlers (business logic)   | ⚠️ **3 of ~50+** | Handshake complete              |
 | Database Adapters           | ✅ Complete       | Jdbi 3 + normalized schema      |
 | Room Engine                 | ❌ Missing        | No RoomRepository               |
 | Concurrency Model           | ❌ Missing        | No StripedRoomTaskScheduler     |
@@ -202,14 +202,27 @@ Parsers and composers have backwards compatibility via `getHeaderIdLegacy()` / `
 
 The `PacketRegistry.java` file can be deleted once all parsers/composers are migrated.
 
-### 1.2 Complete Authentication Flow
+### 1.2 Complete Authentication Flow (IMPLEMENTED)
 
-**Current `SsoTicketHandler` Response:**
-- ✅ AuthenticatedMessage
-- ✅ UserInfoMessage
-- ✅ UserCreditsMessage
+**Handshake Handlers (3/3):**
+| Handler              | Packet ID | Purpose                          |
+|----------------------|-----------|----------------------------------|
+| `ClientHelloHandler` | 4000      | Initial client connection        |
+| `SsoTicketHandler`   | 2419      | SSO authentication + user load   |
+| `UniqueIDHandler`    | 2490      | Machine ID tracking              |
 
-**Missing Packets for Hotel View:**
+**`SsoTicketHandler` Response Packets:**
+- ✅ AuthenticatedMessage (server confirms auth)
+- ✅ UserInfoMessage (user profile data)
+- ✅ UserCreditsMessage (currency balance)
+
+**`UniqueIDHandler` Response:**
+- ✅ UniqueMachineIDMessage (server-generated machine ID)
+
+**WebSocket Support:**
+- ✅ `WebSocketBinaryEncoder` - Wraps ByteBuf in BinaryWebSocketFrame for Nitro client
+
+**Missing Packets for Full Hotel View:**
 
 | #  | Message Class               | Header              | Purpose             |
 |----|-----------------------------|---------------------|---------------------|
@@ -926,13 +939,17 @@ Week 1-2: PHASE 1 - Authentication
 │   ├── @ParsesPacket, @ComposesPacket, @HandlesPacket annotations
 │   ├── PacketScanner with ClassGraph
 │   └── Base classes updated (backwards compatible)
-├── 1.2 Complete authentication flow (Hotel View handlers)
+├── 1.2 Complete authentication flow ✅ DONE (Handshake complete)
+│   ├── ClientHelloHandler (packet 4000) - initial connection
+│   ├── SsoTicketHandler (packet 2419) - SSO auth + user loading
+│   ├── UniqueIDHandler (packet 2490) - machine ID tracking
+│   └── WebSocketBinaryEncoder - BinaryWebSocketFrame wrapping
 ├── 1.3 Database Layer ✅ DONE
 │   ├── Jdbi 3 integration with SqlObject plugin
 │   ├── Normalized schema (database/schema.sql)
 │   ├── UserDao, UserDataDao, UserTicketDao, UserCurrencyDao
 │   └── JdbiUserRepository combining normalized tables
-└── 1.4 Test: Client → Hotel View
+└── 1.4 Test: Client → Hotel View ✅ DONE (Nitro connects + authenticates)
 
 Week 3-4: PHASE 2 - Concurrency
 ├── 2.1 RoomTaskScheduler interface

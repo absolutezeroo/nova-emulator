@@ -44,12 +44,16 @@ public class UniqueIDHandler implements PacketHandler<UniqueIDMessageEvent> {
             LOGGER.debug("Generated new machine ID for {}", connection.getIpAddress());
         }
 
-        // Store machine ID in connection for later use
+        // Store machine info in connection for later use (anti-cheat, session tracking)
         connection.setAttribute("machineId", machineId);
+        connection.setAttribute("fingerprint", packet.fingerprint());
+        connection.setAttribute("flashVersion", packet.flashVersion());
 
-        LOGGER.debug("Machine ID received from {}: {}...",
+        LOGGER.debug("Machine ID received from {}: {}... (fingerprint: {}, version: {})",
                 connection.getIpAddress(),
-                machineId.substring(0, Math.min(8, machineId.length())));
+                machineId.substring(0, Math.min(8, machineId.length())),
+                packet.fingerprint(),
+                packet.flashVersion());
     }
 
     private String generateMachineId() {

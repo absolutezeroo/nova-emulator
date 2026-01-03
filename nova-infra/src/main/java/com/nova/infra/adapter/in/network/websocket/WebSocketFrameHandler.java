@@ -81,8 +81,9 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<BinaryWeb
             return;
         }
 
-        // Read body
-        ByteBuf body = Unpooled.copiedBuffer(content.readBytes(expectedBodyLength));
+        // Read body - allocate directly to avoid intermediate ByteBuf leak
+        ByteBuf body = Unpooled.buffer(expectedBodyLength);
+        content.readBytes(body);
 
         // Create a ClientMessage and process it
         ClientMessage message = new ClientMessage(headerId, body);
