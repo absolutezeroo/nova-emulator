@@ -1,10 +1,6 @@
 package com.nova.infra.adapter.persistence.repository;
 
-import com.nova.core.domain.model.User;
-import com.nova.core.domain.model.UserId;
-import com.nova.core.domain.model.user.UserCurrencies;
-import com.nova.core.domain.model.user.UserData;
-import com.nova.core.domain.model.user.UserRank;
+import com.nova.core.domain.model.core.user.*;
 import com.nova.core.domain.repository.UserRepository;
 import com.nova.infra.adapter.persistence.dao.permission.RankDao;
 import com.nova.infra.adapter.persistence.dao.user.UserCurrencyDao;

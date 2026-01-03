@@ -1,6 +1,6 @@
 package com.nova.core.exception;
 
-import com.nova.core.domain.model.UserId;
+import com.nova.core.domain.model.core.user.UserId;
 
 /**
  * Thrown when a requested user cannot be found.

@@ -1,7 +1,7 @@
 package com.nova.infra.adapter.persistence;
 
-import com.nova.core.domain.model.User;
-import com.nova.core.domain.model.UserId;
+import com.nova.core.domain.model.core.user.User;
+import com.nova.core.domain.model.core.user.UserId;
 import com.nova.core.domain.repository.SessionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

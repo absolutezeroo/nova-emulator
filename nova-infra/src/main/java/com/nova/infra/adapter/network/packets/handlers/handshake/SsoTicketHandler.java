@@ -1,8 +1,8 @@
 package com.nova.infra.adapter.network.packets.handlers.handshake;
 
+import com.nova.core.domain.model.core.user.User;
 import jakarta.inject.Inject;
 import com.nova.core.domain.api.user.result.AuthenticationResult;
-import com.nova.core.domain.model.User;
 import com.nova.core.domain.api.user.UserUseCase;
 import com.nova.core.domain.gateway.NetworkConnection;
 import com.nova.infra.adapter.network.packets.annotations.HandlesPacket;

@@ -1,8 +1,8 @@
 package com.nova.core.domain.api.user;
 
 import com.nova.core.domain.api.user.result.AuthenticationResult;
-import com.nova.core.domain.model.User;
-import com.nova.core.domain.model.UserId;
+import com.nova.core.domain.model.core.user.User;
+import com.nova.core.domain.model.core.user.UserId;
 
 import java.util.Optional;
 

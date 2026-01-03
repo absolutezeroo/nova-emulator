@@ -1,7 +1,7 @@
 package com.nova.core.domain.repository;
 
-import com.nova.core.domain.model.User;
-import com.nova.core.domain.model.UserId;
+import com.nova.core.domain.model.core.user.User;
+import com.nova.core.domain.model.core.user.UserId;
 
 import java.util.Collection;
 import java.util.Optional;

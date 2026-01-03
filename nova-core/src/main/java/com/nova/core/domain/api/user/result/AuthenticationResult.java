@@ -1,6 +1,6 @@
 package com.nova.core.domain.api.user.result;
 
-import com.nova.core.domain.model.User;
+import com.nova.core.domain.model.core.user.User;
 
 import java.util.Optional;
 
