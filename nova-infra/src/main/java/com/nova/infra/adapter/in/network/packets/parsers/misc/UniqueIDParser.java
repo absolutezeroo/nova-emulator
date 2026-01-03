@@ -7,13 +7,16 @@ import com.nova.infra.adapter.in.network.packets.incoming.misc.UniqueIDMessageEv
 import com.nova.infra.adapter.in.network.packets.annotations.ParsesPacket;
 
 /**
- * Parses UniqueID packet from client.
+ * Parses UniqueID (MachineID) packet from client.
  */
 @ParsesPacket(Incoming.SECURITY_MACHINE)
 public class UniqueIDParser extends PacketParser<UniqueIDMessageEvent> {
-@Override
+    @Override
     public UniqueIDMessageEvent parse(ClientMessage message) {
-        // No fields to parse
-        return new UniqueIDMessageEvent();
+        String machineId = message.readString();
+        String fingerprint = message.readString();
+        String flashVersion = message.readString();
+
+        return new UniqueIDMessageEvent(machineId, fingerprint, flashVersion);
     }
 }

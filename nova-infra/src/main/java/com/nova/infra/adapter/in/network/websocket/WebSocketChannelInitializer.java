@@ -43,6 +43,9 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
         // WebSocket protocol handler (handles upgrade, ping/pong, close frames)
         pipeline.addLast("wsProtocol", new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
 
+        // Encoder to wrap outgoing ByteBuf in BinaryWebSocketFrame
+        pipeline.addLast("wsEncoder", new WebSocketBinaryEncoder());
+
         // Bridge WebSocket frames to game packet handlers
         pipeline.addLast("wsFrameHandler", new WebSocketFrameHandler(packetDispatcher));
 

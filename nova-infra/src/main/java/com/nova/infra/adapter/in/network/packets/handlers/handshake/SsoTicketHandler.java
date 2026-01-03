@@ -11,8 +11,13 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager
 import com.nova.infra.adapter.in.network.packets.handlers.PacketHandler;
 import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
 import com.nova.infra.adapter.in.network.packets.outgoing.handshake.AuthenticatedMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.misc.AvailabilityStatusMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.NavigatorHomeRoomMessage;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCreditsMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCurrencyMessage;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserInfoMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.UserPermissionsMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.UserSubscriptionMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,31 +73,79 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
         connection.setAttribute("user", user);
         connection.setAttribute("userId", user.getId());
 
-        // Send AuthOK
+        // === Send authentication sequence ===
+
+        // 1. AuthOK - confirms authentication success
         connection.send(composerManager.compose(new AuthenticatedMessage()).getBuffer());
 
-        // Send user info
-        UserInfoMessage userInfo = new UserInfoMessage(
-                user.getId().value(),
-                user.getUsername(),
-                user.getFigure(),
-                "M", // Gender placeholder
-                user.getMotto(),
-                user.getUsername(),
-                false,
-                0,
-                0,
-                0,
-                false,
-                "",
-                false,
-                false
-        );
-        connection.send(composerManager.compose(userInfo).getBuffer());
+        // 2. Availability Status - hotel is open
+        connection.send(composerManager.compose(
+                new AvailabilityStatusMessage(true, false, true)
+        ).getBuffer());
 
-        // Send credits
-        UserCreditsMessage credits = new UserCreditsMessage(String.valueOf(user.getCredits()));
-        connection.send(composerManager.compose(credits).getBuffer());
+        // 3. Home Room - user's home room ID
+        int homeRoomId = user.getHomeRoomId() != null ? user.getHomeRoomId() : 0;
+        connection.send(composerManager.compose(
+                new NavigatorHomeRoomMessage(homeRoomId, homeRoomId)
+        ).getBuffer());
+
+        // 4. User Permissions - rank/security level
+        connection.send(composerManager.compose(
+                new UserPermissionsMessage(
+                        user.getRank().getClubLevel(),  // 0=none, 1=HC, 2=VIP
+                        user.getRankLevel(),            // Security level
+                        user.isAmbassador()             // Ambassador flag
+                )
+        ).getBuffer());
+
+        // 5. Club Subscription - HC/VIP status
+        connection.send(composerManager.compose(
+                new UserSubscriptionMessage(
+                        "habbo_club",                   // Product name
+                        user.hasClub() ? 30 : 0,        // Days to period end
+                        user.hasClub() ? 1 : 0,         // Member periods
+                        0,                               // Periods subscribed ahead
+                        1,                               // Response type
+                        user.hasClub(),                  // Has ever been member
+                        user.isVip(),                    // Is VIP
+                        0,                               // Past club days
+                        0,                               // Past VIP days
+                        0,                               // Minutes until expiration
+                        0                                // Minutes since last modified
+                )
+        ).getBuffer());
+
+        // 6. User Info - full profile data
+        connection.send(composerManager.compose(
+                new UserInfoMessage(
+                        user.getId().value(),
+                        user.getUsername(),
+                        user.getFigure(),
+                        user.getGender(),
+                        user.getMotto(),
+                        user.getUsername(),             // Real name (same as username)
+                        false,                          // Direct mail
+                        user.getRespectReceived(),
+                        user.getDailyRespectPoints(),
+                        user.getDailyPetRespect(),
+                        false,                          // Stream publishing allowed
+                        "",                             // Last access date
+                        false,                          // Can change name
+                        false                           // Safety locked
+                )
+        ).getBuffer());
+
+        // 7. Credits
+        connection.send(composerManager.compose(
+                new UserCreditsMessage(String.valueOf(user.getCredits()))
+        ).getBuffer());
+
+        // 8. Activity Points (pixels, diamonds)
+        connection.send(composerManager.compose(
+                UserCurrencyMessage.of(user.getPixels(), user.getDiamonds())
+        ).getBuffer());
+
+        LOGGER.debug("Sent complete authentication sequence to {}", user.getUsername());
     }
 
     private void onFailure(NetworkConnection connection, AuthenticationResult.FailureReason reason) {

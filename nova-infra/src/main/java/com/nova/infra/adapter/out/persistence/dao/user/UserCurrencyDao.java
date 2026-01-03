@@ -25,16 +25,16 @@ public interface UserCurrencyDao {
             """)
     List<UserCurrencyEntity> findAllByUserId(@Bind("userId") int userId);
 
-    @SqlQuery("SELECT COALESCE(amount, 0) FROM user_currencies WHERE user_id = :userId AND currency_type = :type")
+    @SqlQuery("SELECT COALESCE((SELECT amount FROM user_currencies WHERE user_id = :userId AND currency_type = :type), 0)")
     int getAmount(@Bind("userId") int userId, @Bind("type") int type);
 
-    @SqlQuery("SELECT COALESCE(amount, 0) FROM user_currencies WHERE user_id = :userId AND currency_type = 0")
+    @SqlQuery("SELECT COALESCE((SELECT amount FROM user_currencies WHERE user_id = :userId AND currency_type = 0), 0)")
     int getCredits(@Bind("userId") int userId);
 
-    @SqlQuery("SELECT COALESCE(amount, 0) FROM user_currencies WHERE user_id = :userId AND currency_type = 5")
+    @SqlQuery("SELECT COALESCE((SELECT amount FROM user_currencies WHERE user_id = :userId AND currency_type = 5), 0)")
     int getPixels(@Bind("userId") int userId);
 
-    @SqlQuery("SELECT COALESCE(amount, 0) FROM user_currencies WHERE user_id = :userId AND currency_type = 101")
+    @SqlQuery("SELECT COALESCE((SELECT amount FROM user_currencies WHERE user_id = :userId AND currency_type = 101), 0)")
     int getDiamonds(@Bind("userId") int userId);
 
     @SqlUpdate("""

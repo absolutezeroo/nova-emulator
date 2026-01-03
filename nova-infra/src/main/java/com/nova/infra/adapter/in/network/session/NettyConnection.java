@@ -74,8 +74,9 @@ public class NettyConnection implements NetworkConnection {
         try {
             // ByteBuf can be sent directly (from PacketBuffer.getBuffer())
             if (response instanceof ByteBuf byteBuf) {
+                int size = byteBuf.readableBytes();
                 channel.writeAndFlush(byteBuf);
-                LOGGER.debug("Sent packet to {} ({} bytes)", id, byteBuf.readableBytes());
+                LOGGER.debug("Sent packet to {} ({} bytes)", id, size);
             } else {
                 // For other types, just write directly (let encoder handle)
                 channel.writeAndFlush(response);

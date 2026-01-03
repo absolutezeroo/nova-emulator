@@ -33,7 +33,7 @@ public class InfrastructureModule extends AbstractModule {
     // TODO: Load from config file
     private static final String DB_HOST = "localhost";
     private static final int DB_PORT = 3306;
-    private static final String DB_NAME = "veloce_fusion_api";
+    private static final String DB_NAME = "nova_emulator";
     private static final String DB_USER = "root";
     private static final String DB_PASS = "admin";
     private static final int DB_POOL_SIZE = 10;

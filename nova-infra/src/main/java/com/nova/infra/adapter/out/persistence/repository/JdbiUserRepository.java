@@ -2,11 +2,16 @@ package com.nova.infra.adapter.out.persistence.repository;
 
 import com.nova.core.domain.model.User;
 import com.nova.core.domain.model.UserId;
+import com.nova.core.domain.model.user.UserCurrencies;
+import com.nova.core.domain.model.user.UserData;
+import com.nova.core.domain.model.user.UserRank;
 import com.nova.core.domain.port.out.UserRepository;
+import com.nova.infra.adapter.out.persistence.dao.permission.RankDao;
 import com.nova.infra.adapter.out.persistence.dao.user.UserCurrencyDao;
 import com.nova.infra.adapter.out.persistence.dao.user.UserDao;
 import com.nova.infra.adapter.out.persistence.dao.user.UserDataDao;
 import com.nova.infra.adapter.out.persistence.dao.user.UserTicketDao;
+import com.nova.infra.adapter.out.persistence.entity.permission.RankEntity;
 import com.nova.infra.adapter.out.persistence.entity.user.UserDataEntity;
 import com.nova.infra.adapter.out.persistence.entity.user.UserEntity;
 import com.nova.infra.adapter.out.persistence.entity.user.UserTicketEntity;
@@ -88,13 +93,19 @@ public class JdbiUserRepository implements UserRepository {
                     dao -> dao.findByUserId(userId.value())
             );
 
-            // Load credits from user_currencies table
-            int credits = jdbi.withExtension(
-                    UserCurrencyDao.class,
-                    dao -> dao.getCredits(userId.value())
+            // Load rank from ranks table
+            Optional<RankEntity> rankOpt = jdbi.withExtension(
+                    RankDao.class,
+                    dao -> dao.findById(userEntity.rankId())
             );
 
-            return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), credits));
+            // Load all currencies from user_currencies table
+            int credits = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getCredits(userId.value()));
+            int pixels = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getPixels(userId.value()));
+            int diamonds = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getDiamonds(userId.value()));
+
+            return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), rankOpt.orElse(null),
+                    credits, pixels, diamonds));
         } catch (Exception e) {
             LOGGER.error("Error finding user by ID: {}", userId, e);
             return Optional.empty();
@@ -122,13 +133,19 @@ public class JdbiUserRepository implements UserRepository {
                     dao -> dao.findByUserId(userId)
             );
 
-            // Load credits
-            int credits = jdbi.withExtension(
-                    UserCurrencyDao.class,
-                    dao -> dao.getCredits(userId)
+            // Load rank
+            Optional<RankEntity> rankOpt = jdbi.withExtension(
+                    RankDao.class,
+                    dao -> dao.findById(userEntity.rankId())
             );
 
-            return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), credits));
+            // Load all currencies
+            int credits = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getCredits(userId));
+            int pixels = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getPixels(userId));
+            int diamonds = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getDiamonds(userId));
+
+            return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), rankOpt.orElse(null),
+                    credits, pixels, diamonds));
         } catch (Exception e) {
             LOGGER.error("Error finding user by username: {}", username, e);
             return Optional.empty();
@@ -181,29 +198,63 @@ public class JdbiUserRepository implements UserRepository {
     // ========================
 
     /**
-     * Converts normalized database entities to a domain model.
+     * Converts normalized database entities to domain Value Objects and assembles User.
      * <p>
-     * Combines data from:
-     * - UserEntity (users table): id, username, createdAt
-     * - UserDataEntity (user_data table): motto, figure, lastOnline
-     * - credits from user_currencies table
+     * Maps from:
+     * - UserEntity → identity (id, username, createdAt)
+     * - UserDataEntity → UserData (motto, figure, gender, homeRoomId, respect, etc.)
+     * - RankEntity → UserRank (rankId, level, name)
+     * - Currencies → UserCurrencies (credits, pixels, diamonds)
      */
-    private User toDomainModel(UserEntity userEntity, UserDataEntity dataEntity, int credits) {
-        String motto = "";
-        String figure = "hr-115-42.hd-190-1.ch-215-62.lg-285-91.sh-290-62";
+    private User toDomainModel(UserEntity userEntity, UserDataEntity dataEntity,
+                               RankEntity rankEntity, int credits, int pixels, int diamonds) {
+        // Map UserDataEntity → UserData Value Object
+        UserData userData = mapToUserData(dataEntity);
 
-        if (dataEntity != null) {
-            motto = dataEntity.motto();
-            figure = dataEntity.figure();
+        // Map RankEntity → UserRank Value Object
+        UserRank userRank = mapToUserRank(userEntity.rankId(), rankEntity);
+
+        // Create UserCurrencies Value Object
+        UserCurrencies currencies = UserCurrencies.of(credits, pixels, diamonds);
+
+        // Determine lastOnline
+        Instant lastOnline = userEntity.createdAt();
+        if (dataEntity != null && dataEntity.lastOnlineAt() != null) {
+            lastOnline = dataEntity.lastOnlineAt();
         }
 
         return new User(
                 UserId.of(userEntity.id()),
                 userEntity.username(),
-                motto,
-                figure,
-                credits,
-                userEntity.createdAt()
+                userData,
+                userRank,
+                currencies,
+                userEntity.createdAt(),
+                lastOnline
         );
+    }
+
+    private UserData mapToUserData(UserDataEntity entity) {
+        if (entity == null) {
+            return UserData.defaultData();
+        }
+        return new UserData(
+                entity.motto(),
+                entity.figure(),
+                entity.gender(),
+                entity.homeRoomId(),
+                entity.respectReceived(),
+                entity.respectGiven(),
+                entity.dailyRespectPoints(),
+                entity.dailyPetRespect(),
+                entity.achievementScore()
+        );
+    }
+
+    private UserRank mapToUserRank(int rankId, RankEntity entity) {
+        if (entity == null) {
+            return new UserRank(rankId, "Normal", 1);
+        }
+        return new UserRank(entity.id(), entity.name(), entity.level());
     }
 }
