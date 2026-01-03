@@ -1,4 +1,4 @@
-package com.nova.app.service;
+package com.nova.app.service.user;
 
 import com.google.inject.Inject;
 import com.nova.core.application.command.AuthenticateCommand;
@@ -8,7 +8,7 @@ import com.nova.core.application.result.AuthenticationResult.FailureReason;
 import com.nova.core.application.result.AuthenticationResult.Success;
 import com.nova.core.domain.model.User;
 import com.nova.core.domain.model.UserId;
-import com.nova.core.domain.port.in.UserUseCase;
+import com.nova.core.domain.port.in.user.UserUseCase;
 import com.nova.core.domain.port.out.SessionRepository;
 import com.nova.core.domain.port.out.UserRepository;
 import com.nova.core.exception.UserNotFoundException;
@@ -60,14 +60,6 @@ public class UserService implements UserUseCase {
 
         LOGGER.info("User {} authenticated successfully", user.getUsername());
         return new Success(user);
-    }
-
-    @Override
-    @Deprecated(forRemoval = true)
-    public Optional<User> authenticate(String ssoTicket) {
-        AuthenticationResult result = authenticate(new AuthenticateCommand(ssoTicket));
-
-        return result.getUser();
     }
 
     @Override

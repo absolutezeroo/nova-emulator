@@ -34,7 +34,7 @@
 | Handlers (business logic)   | ⚠️ **3 of ~50+** | Handshake complete              |
 | Database Adapters           | ✅ Complete       | Jdbi 3 + normalized schema      |
 | Room Engine                 | ❌ Missing        | No RoomRepository               |
-| Concurrency Model           | ❌ Missing        | No StripedRoomTaskScheduler     |
+| Concurrency Model           | ✅ Complete       | StripedRoomTaskScheduler        |
 | Pathfinding                 | ❌ Missing        | No A* implementation            |
 
 ### Packet Categories Available
@@ -948,10 +948,13 @@ Week 1-2: PHASE 1 - Authentication
 │   └── JdbiUserRepository combining normalized tables
 └── 1.4 Test: Client → Hotel View ✅ DONE (Nitro connects + authenticates)
 
-Week 3-4: PHASE 2 - Concurrency
-├── 2.1 RoomTaskScheduler interface
-├── 2.2 StripedRoomTaskScheduler impl
-└── 2.3 Guice binding + integration
+Week 3-4: PHASE 2 - Concurrency ✅ DONE
+├── 2.1 RoomTaskScheduler interface ✅
+│   └── nova-core/domain/port/in/RoomTaskScheduler.java
+├── 2.2 StripedRoomTaskScheduler impl ✅
+│   └── nova-infra/adapter/in/concurrency/StripedRoomTaskScheduler.java
+└── 2.3 Guice binding + integration ✅
+    └── InfrastructureModule.provideRoomTaskScheduler()
 
 Week 5-6: PHASE 3 - Room Engine
 ├── 3.1 Room domain model

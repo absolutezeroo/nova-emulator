@@ -1,4 +1,4 @@
-package com.nova.core.domain.port.in;
+package com.nova.core.domain.port.in.user;
 
 import com.nova.core.application.command.AuthenticateCommand;
 import com.nova.core.application.result.AuthenticationResult;
@@ -25,16 +25,6 @@ public interface UserUseCase {
      * @return the authentication result (success with user, or failure with reason)
      */
     AuthenticationResult authenticate(AuthenticateCommand command);
-
-    /**
-     * Authenticates a user and returns their profile.
-     *
-     * @param ssoTicket The SSO ticket for authentication
-     * @return The authenticated user, or empty if authentication failed
-     * @deprecated Use {@link #authenticate(AuthenticateCommand)} instead
-     */
-    @Deprecated(forRemoval = true)
-    Optional<User> authenticate(String ssoTicket);
 
     /**
      * Finds a user by their ID.

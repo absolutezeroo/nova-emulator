@@ -4,7 +4,7 @@ import jakarta.inject.Inject;
 import com.nova.core.application.command.AuthenticateCommand;
 import com.nova.core.application.result.AuthenticationResult;
 import com.nova.core.domain.model.User;
-import com.nova.core.domain.port.in.UserUseCase;
+import com.nova.core.domain.port.in.user.UserUseCase;
 import com.nova.core.domain.port.out.network.NetworkConnection;
 import com.nova.infra.adapter.in.network.packets.annotations.HandlesPacket;
 import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;

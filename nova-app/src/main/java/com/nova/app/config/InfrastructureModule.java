@@ -4,8 +4,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.nova.core.domain.port.in.room.RoomTaskScheduler;
 import com.nova.core.domain.port.out.SessionRepository;
 import com.nova.core.domain.port.out.UserRepository;
+import com.nova.infra.adapter.in.concurrency.StripedRoomTaskScheduler;
 import com.nova.infra.adapter.in.network.packets.PacketDispatcher;
 import com.nova.infra.adapter.in.network.packets.annotations.PacketScanner;
 import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager;
@@ -141,5 +143,15 @@ public class InfrastructureModule extends AbstractModule {
         WebSocketChannelInitializer initializer = new WebSocketChannelInitializer(packetDispatcher);
 
         return new WebSocketGameServer(GAME_HOST, WEBSOCKET_PORT, initializer);
+    }
+
+    // === Concurrency ===
+
+    @Provides
+    @Singleton
+    public RoomTaskScheduler provideRoomTaskScheduler() {
+        // Use CPU core count for optimal parallelism
+        int stripeCount = Runtime.getRuntime().availableProcessors();
+        return new StripedRoomTaskScheduler(stripeCount);
     }
 }
