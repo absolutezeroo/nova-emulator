@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.annotations;
 
-import com.nova.infra.adapter.network.packets.IIncomingPacket;
+import com.nova.infra.adapter.network.packets.IncomingPacket;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -41,5 +41,5 @@ public @interface HandlesPacket {
      *
      * @return the event class type
      */
-    Class<? extends IIncomingPacket> value();
+    Class<? extends IncomingPacket> value();
 }

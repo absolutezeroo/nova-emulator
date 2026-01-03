@@ -1,10 +1,10 @@
 package com.nova.infra.adapter.network.packets.outgoing.help;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
  */
 public record CallForHelpDisabledNotifyMessage(
     String infoUrl
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.misc;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -11,4 +11,4 @@ public record Game2WeeklyLeaderboardMessage(
     int maxOffset,
     int currentOffset,
     int minutesUntilReset
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

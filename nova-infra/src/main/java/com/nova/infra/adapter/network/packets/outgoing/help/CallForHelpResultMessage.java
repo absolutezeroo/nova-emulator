@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.help;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -8,4 +8,4 @@ import com.nova.infra.adapter.network.packets.IOutgoingPacket;
 public record CallForHelpResultMessage(
     int resultType,
     String messageText
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

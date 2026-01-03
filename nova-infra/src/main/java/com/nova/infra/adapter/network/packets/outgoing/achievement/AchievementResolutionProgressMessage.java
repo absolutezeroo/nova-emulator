@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.achievement;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -12,4 +12,4 @@ public record AchievementResolutionProgressMessage(
     int userProgress,
     int totalProgress,
     int endTime
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

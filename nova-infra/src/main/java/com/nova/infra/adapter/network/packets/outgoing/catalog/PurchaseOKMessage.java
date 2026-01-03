@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.catalog;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -13,4 +13,4 @@ public record PurchaseOKMessage(
     int priceActivityPoints,
     int priceActivityPointsType,
     boolean giftable
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

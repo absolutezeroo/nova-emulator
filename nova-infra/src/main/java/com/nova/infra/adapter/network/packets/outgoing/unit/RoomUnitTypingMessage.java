@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.unit;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -8,4 +8,4 @@ import com.nova.infra.adapter.network.packets.IOutgoingPacket;
 public record RoomUnitTypingMessage(
     int unitId,
     int isTyping
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.websocket;
 
-import com.nova.core.domain.repository.network.GameServerPort;
+import com.nova.core.domain.gateway.GameServerPort;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;

@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.user;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -16,4 +16,4 @@ public record UserProfileMessage(
     boolean isMyFriend,
     boolean requestSent,
     boolean isOnline
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

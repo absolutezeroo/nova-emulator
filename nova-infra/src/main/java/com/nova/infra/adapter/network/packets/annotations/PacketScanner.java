@@ -1,7 +1,7 @@
 package com.nova.infra.adapter.network.packets.annotations;
 
 import com.google.inject.Injector;
-import com.nova.infra.adapter.network.packets.IIncomingPacket;
+import com.nova.infra.adapter.network.packets.IncomingPacket;
 import com.nova.infra.adapter.network.packets.composers.PacketComposer;
 import com.nova.infra.adapter.network.packets.composers.PacketComposerManager;
 import com.nova.infra.adapter.network.packets.handlers.PacketHandler;
@@ -138,7 +138,7 @@ public class PacketScanner {
                             (Class<? extends PacketHandler<?>>) classInfo.loadClass();
 
                     HandlesPacket annotation = handlerClass.getAnnotation(HandlesPacket.class);
-                    Class<? extends IIncomingPacket> eventClass = annotation.value();
+                    Class<? extends IncomingPacket> eventClass = annotation.value();
 
                     // Instantiate via Guice for dependency injection
                     PacketHandler<?> handler = injector.getInstance(handlerClass);

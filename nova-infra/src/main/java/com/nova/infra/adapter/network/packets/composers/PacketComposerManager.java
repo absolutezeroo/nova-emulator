@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.composers;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 import com.nova.infra.adapter.network.packets.outgoing.PacketBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class PacketComposerManager {
             LOGGER.error("Cannot determine message type for composer: {}", composer.getClass().getName());
             return;
         }
-        register((Class<IOutgoingPacket>) messageType, (PacketComposer<IOutgoingPacket>) composer);
+        register((Class<OutgoingPacket>) messageType, (PacketComposer<OutgoingPacket>) composer);
     }
 
     /**
@@ -43,7 +43,7 @@ public class PacketComposerManager {
      * @param composer    The composer to register
      * @param <T>         The message type
      */
-    public <T extends IOutgoingPacket> void register(Class<T> messageType, PacketComposer<T> composer) {
+    public <T extends OutgoingPacket> void register(Class<T> messageType, PacketComposer<T> composer) {
         if (composers.containsKey(messageType)) {
             LOGGER.warn("Overwriting composer for message type: {}", messageType.getSimpleName());
         }
@@ -87,7 +87,7 @@ public class PacketComposerManager {
      * @return The composed packet buffer, or null if no composer is registered
      */
     @SuppressWarnings("unchecked")
-    public <T extends IOutgoingPacket> PacketBuffer compose(T message) {
+    public <T extends OutgoingPacket> PacketBuffer compose(T message) {
         PacketComposer<T> composer = (PacketComposer<T>) composers.get(message.getClass());
 
         if (composer == null) {

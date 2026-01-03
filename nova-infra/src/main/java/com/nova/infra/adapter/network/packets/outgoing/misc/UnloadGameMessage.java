@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.misc;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -8,4 +8,4 @@ import com.nova.infra.adapter.network.packets.IOutgoingPacket;
 public record UnloadGameMessage(
     int gameTypeId,
     String gameClientId
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

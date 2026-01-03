@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.misc;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -13,4 +13,4 @@ public record PresentOpenedMessage(
     String placedItemType,
     boolean placedInRoom,
     String petFigureString
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

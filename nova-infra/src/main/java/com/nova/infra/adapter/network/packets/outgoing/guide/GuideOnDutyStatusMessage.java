@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.guide;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -10,4 +10,4 @@ public record GuideOnDutyStatusMessage(
     int guidesOnDuty,
     int helpersOnDuty,
     int guardiansOnDuty
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

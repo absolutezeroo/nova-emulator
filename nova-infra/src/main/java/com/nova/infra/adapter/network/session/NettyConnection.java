@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.session;
 
-import com.nova.core.domain.repository.network.NetworkConnection;
+import com.nova.core.domain.gateway.NetworkConnection;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;

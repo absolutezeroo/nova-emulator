@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.user;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 import java.util.Map;
 
@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public record UserCurrencyMessage(
     Map<Integer, Integer> activityPoints
-) implements IOutgoingPacket {
+) implements OutgoingPacket {
 
     public static UserCurrencyMessage of(int pixels, int diamonds) {
         return new UserCurrencyMessage(Map.of(5, pixels, 101, diamonds));

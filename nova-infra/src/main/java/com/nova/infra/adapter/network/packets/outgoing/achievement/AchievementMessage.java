@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.achievement;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -8,4 +8,4 @@ import com.nova.infra.adapter.network.packets.IOutgoingPacket;
 public record AchievementMessage(
     String stuffCode,
     String badgeCode
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

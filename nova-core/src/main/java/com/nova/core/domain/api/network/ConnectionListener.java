@@ -1,6 +1,6 @@
 package com.nova.core.domain.api.network;
 
-import com.nova.core.domain.repository.network.NetworkConnection;
+import com.nova.core.domain.gateway.NetworkConnection;
 
 /**
  * Input port for handling network connection events.

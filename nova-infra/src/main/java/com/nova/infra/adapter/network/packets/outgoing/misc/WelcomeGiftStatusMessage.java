@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.misc;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -11,4 +11,4 @@ public record WelcomeGiftStatusMessage(
     boolean allowChange,
     int furniId,
     boolean requestedByUser
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

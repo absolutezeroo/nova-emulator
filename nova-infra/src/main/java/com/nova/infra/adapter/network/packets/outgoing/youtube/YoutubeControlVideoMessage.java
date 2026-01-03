@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.youtube;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -8,4 +8,4 @@ import com.nova.infra.adapter.network.packets.IOutgoingPacket;
 public record YoutubeControlVideoMessage(
     int furniId,
     int commandId
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.unit;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -11,4 +11,4 @@ public record RoomUnitChatMessage(
     int gesture,
     int bubble,
     int messageLength
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.misc;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -12,4 +12,4 @@ public record RentableSpaceStatusMessage(
     String renterName,
     int timeRemaining,
     int price
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

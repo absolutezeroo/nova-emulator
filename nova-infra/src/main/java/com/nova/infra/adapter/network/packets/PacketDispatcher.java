@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets;
 
-import com.nova.core.domain.repository.network.NetworkConnection;
+import com.nova.core.domain.gateway.NetworkConnection;
 import com.nova.infra.adapter.network.codec.ClientMessage;
 import com.nova.infra.adapter.network.packets.composers.PacketComposerManager;
 import com.nova.infra.adapter.network.packets.handlers.PacketHandlerManager;
@@ -58,8 +58,8 @@ public class PacketDispatcher {
         int packetId = message.headerId();
 
         // Parse the message
-        IIncomingPacket parsed = parserManager.parse(message);
-        Optional<IIncomingPacket> packetOpt = Optional.ofNullable(parsed);
+        IncomingPacket parsed = parserManager.parse(message);
+        Optional<IncomingPacket> packetOpt = Optional.ofNullable(parsed);
 
         if (packetOpt.isEmpty()) {
             LOGGER.debug("No parser for packet ID {} from {}", packetId, connection.getIpAddress());
@@ -67,7 +67,7 @@ public class PacketDispatcher {
         }
 
         // Handle the parsed packet
-        IIncomingPacket packet = packetOpt.get();
+        IncomingPacket packet = packetOpt.get();
         boolean handled = handlerManager.handle(connection, packet);
 
         if (!handled) {
@@ -83,7 +83,7 @@ public class PacketDispatcher {
      * @param message the message to compose
      * @return the composed PacketBuffer ready for sending
      */
-    public <T extends IOutgoingPacket> PacketBuffer compose(T message) {
+    public <T extends OutgoingPacket> PacketBuffer compose(T message) {
         return composerManager.compose(message);
     }
 

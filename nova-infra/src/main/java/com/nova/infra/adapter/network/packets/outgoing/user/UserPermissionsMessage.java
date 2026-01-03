@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.user;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -9,4 +9,4 @@ public record UserPermissionsMessage(
     int clubLevel,
     int securityLevel,
     boolean isAmbassador
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

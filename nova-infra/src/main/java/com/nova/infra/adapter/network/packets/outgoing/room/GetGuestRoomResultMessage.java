@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.room;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -10,4 +10,4 @@ public record GetGuestRoomResultMessage(
     boolean roomForward,
     boolean staffPick,
     boolean isGroupMember
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

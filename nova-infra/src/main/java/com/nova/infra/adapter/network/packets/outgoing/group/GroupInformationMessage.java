@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.group;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -23,4 +23,4 @@ public record GroupInformationMessage(
     boolean flag,
     boolean canMembersDecorate,
     int pendingRequestsCount
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}

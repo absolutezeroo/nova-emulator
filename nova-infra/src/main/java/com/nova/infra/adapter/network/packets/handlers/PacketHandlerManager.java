@@ -1,7 +1,7 @@
 package com.nova.infra.adapter.network.packets.handlers;
 
-import com.nova.core.domain.repository.network.NetworkConnection;
-import com.nova.infra.adapter.network.packets.IIncomingPacket;
+import com.nova.core.domain.gateway.NetworkConnection;
+import com.nova.infra.adapter.network.packets.IncomingPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +32,7 @@ public class PacketHandlerManager {
      * @param handler    the handler for that packet type
      * @return this manager for fluent chaining
      */
-    public <T extends IIncomingPacket> PacketHandlerManager register(
+    public <T extends IncomingPacket> PacketHandlerManager register(
             Class<T> packetType,
             PacketHandler<T> handler) {
 
@@ -56,10 +56,10 @@ public class PacketHandlerManager {
      * @return true if a handler was found and invoked, false otherwise
      */
     @SuppressWarnings("unchecked")
-    public boolean handle(NetworkConnection connection, IIncomingPacket packet) {
+    public boolean handle(NetworkConnection connection, IncomingPacket packet) {
         Class<?> packetType = packet.getClass();
-        PacketHandler<IIncomingPacket> handler =
-                (PacketHandler<IIncomingPacket>) handlers.get(packetType);
+        PacketHandler<IncomingPacket> handler =
+                (PacketHandler<IncomingPacket>) handlers.get(packetType);
 
         if (handler == null) {
             LOGGER.warn("No handler registered for packet type: {}", packetType.getSimpleName());
@@ -84,7 +84,7 @@ public class PacketHandlerManager {
      * Gets the handler for a specific packet type.
      */
     @SuppressWarnings("unchecked")
-    public <T extends IIncomingPacket> Optional<PacketHandler<T>> getHandler(Class<T> packetType) {
+    public <T extends IncomingPacket> Optional<PacketHandler<T>> getHandler(Class<T> packetType) {
         return Optional.ofNullable((PacketHandler<T>) handlers.get(packetType));
     }
 

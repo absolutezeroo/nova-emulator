@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.parsers;
 
-import com.nova.infra.adapter.network.packets.IIncomingPacket;
+import com.nova.infra.adapter.network.packets.IncomingPacket;
 import com.nova.infra.adapter.network.packets.annotations.ParsesPacket;
 import com.nova.infra.adapter.network.codec.ClientMessage;
 
@@ -23,7 +23,7 @@ import com.nova.infra.adapter.network.codec.ClientMessage;
  *
  * @param <T> The type of incoming packet this parser produces
  */
-public abstract class PacketParser<T extends IIncomingPacket> {
+public abstract class PacketParser<T extends IncomingPacket> {
 
     private final int headerId;
 

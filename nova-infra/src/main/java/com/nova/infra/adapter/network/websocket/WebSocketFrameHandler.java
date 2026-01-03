@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.websocket;
 
-import com.nova.core.domain.repository.network.NetworkConnection;
+import com.nova.core.domain.gateway.NetworkConnection;
 import com.nova.infra.adapter.network.codec.ClientMessage;
 import com.nova.infra.adapter.network.packets.PacketDispatcher;
 import com.nova.infra.adapter.network.session.NettyConnection;

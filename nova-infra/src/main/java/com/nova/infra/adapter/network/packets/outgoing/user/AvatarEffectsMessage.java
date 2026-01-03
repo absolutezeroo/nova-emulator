@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.user;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import java.util.List;
  */
 public record AvatarEffectsMessage(
     List<Effect> effects
-) implements IOutgoingPacket {
+) implements OutgoingPacket {
 
     /**
      * An effect in the user's inventory.

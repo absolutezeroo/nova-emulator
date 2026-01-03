@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.handlers.handshake;
 
-import com.nova.core.domain.repository.network.NetworkConnection;
+import com.nova.core.domain.gateway.NetworkConnection;
 import com.nova.infra.adapter.network.packets.annotations.HandlesPacket;
 import com.nova.infra.adapter.network.packets.composers.PacketComposerManager;
 import com.nova.infra.adapter.network.packets.handlers.PacketHandler;

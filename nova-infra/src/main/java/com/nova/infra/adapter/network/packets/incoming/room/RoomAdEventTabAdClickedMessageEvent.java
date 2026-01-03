@@ -1,10 +1,10 @@
 package com.nova.infra.adapter.network.packets.incoming.room;
 
-import com.nova.infra.adapter.network.packets.IIncomingPacket;
+import com.nova.infra.adapter.network.packets.IncomingPacket;
 
 /**
  * Event received from client.
  */
 public record RoomAdEventTabAdClickedMessageEvent(
     // No fields parsed
-) implements IIncomingPacket {}
+) implements IncomingPacket {}

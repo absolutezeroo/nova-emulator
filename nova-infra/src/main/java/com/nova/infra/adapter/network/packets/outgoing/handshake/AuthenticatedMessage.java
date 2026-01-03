@@ -1,8 +1,8 @@
 package com.nova.infra.adapter.network.packets.outgoing.handshake;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
  */
-public record AuthenticatedMessage() implements IOutgoingPacket {}
+public record AuthenticatedMessage() implements OutgoingPacket {}

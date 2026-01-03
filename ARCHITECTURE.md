@@ -48,21 +48,32 @@ The heart of the application. Contains pure business logic with **zero framework
 ```
 nova-core/
 └── src/main/java/com/nova/core/
+    ├── application/
+    │   ├── command/        # Command DTOs for use cases
+    │   │   └── AuthenticateCommand.java
+    │   └── result/         # Result DTOs from use cases
+    │       └── AuthenticationResult.java
     ├── domain/
     │   ├── model/          # Entities and Value Objects
     │   │   ├── User.java        # Aggregate root
-    │   │   └── UserId.java      # Value object (record)
-    │   └── port/
-    │       ├── in/         # Input Ports (Use Case interfaces)
-    │       │   ├── UserUseCase.java
-    │       │   └── network/
-    │       │       └── ConnectionListener.java  # Network event callbacks
-    │       └── out/        # Output Ports (Repository/Gateway interfaces)
-    │           ├── UserRepository.java
-    │           ├── SessionRepository.java
-    │           └── network/
-    │               ├── NetworkConnection.java   # Abstract client connection
-    │               └── GameServerPort.java      # Abstract server lifecycle
+    │   │   ├── UserId.java      # Value object (record)
+    │   │   └── user/            # User-related value objects
+    │   │       ├── UserData.java
+    │   │       ├── UserRank.java
+    │   │       └── UserCurrencies.java
+    │   ├── api/            # Input Ports (Use Case interfaces)
+    │   │   ├── user/
+    │   │   │   └── UserUseCase.java
+    │   │   ├── room/
+    │   │   │   └── RoomTaskScheduler.java
+    │   │   └── network/
+    │   │       └── ConnectionListener.java  # Network event callbacks
+    │   ├── repository/     # Output Ports (Data persistence)
+    │   │   ├── UserRepository.java
+    │   │   └── SessionRepository.java
+    │   └── gateway/        # Output Ports (External systems)
+    │       ├── NetworkConnection.java   # Abstract client connection
+    │       └── GameServerPort.java      # Abstract server lifecycle
     └── exception/          # Domain exceptions
         ├── DomainException.java
         └── UserNotFoundException.java
@@ -82,70 +93,71 @@ Implements the ports defined in core with concrete technologies.
 nova-infra/
 └── src/main/java/com/nova/infra/
     ├── adapter/
-    │   ├── in/             # Inbound Adapters (drive the application)
-    │   │   └── network/
-    │   │       ├── codec/                       # Netty codecs
-    │   │       │   ├── ClientMessage.java           # Inbound packet DTO
-    │   │       │   ├── GameByteFrameDecoder.java    # 4-byte length framing
-    │   │       │   └── GamePacketDecoder.java       # Packet decoder
-    │   │       ├── handler/                     # Netty handlers
-    │   │       │   ├── GameHandler.java             # Routes to PacketDispatcher
-    │   │       │   └── PolicyFileHandler.java       # Flash policy XML
-    │   │       ├── packets/                     # Packet handling system
-    │   │       │   ├── IIncomingPacket.java         # Marker interface
-    │   │       │   ├── IOutgoingPacket.java         # Marker interface
-    │   │       │   ├── PacketDispatcher.java        # Central dispatcher
-    │   │       │   ├── parsers/                     # Bytes → Typed events
-    │   │       │   ├── handlers/                    # Events → Use cases
-    │   │       │   ├── composers/                   # Messages → Bytes
-    │   │       │   ├── incoming/                    # Incoming event DTOs
-    │   │       │   └── outgoing/                    # Outgoing message DTOs
-    │   │       ├── session/                     # Connection management
-    │   │       │   └── NettyConnection.java         # Implements NetworkConnection
-    │   │       ├── server/                      # TCP server
-    │   │       │   ├── GameServer.java              # Implements GameServerPort
-    │   │       │   └── GameChannelInitializer.java  # TCP pipeline
-    │   │       └── websocket/                   # WebSocket server
-    │   │           ├── WebSocketGameServer.java     # Implements GameServerPort
-    │   │           ├── WebSocketChannelInitializer.java
-    │   │           └── WebSocketFrameHandler.java
-    │   └── out/            # Outbound Adapters (driven by application)
-    │       └── persistence/
-    │           ├── dao/                       # Jdbi SqlObject interfaces (by domain)
-    │           │   ├── user/                      # UserDao, UserDataDao, UserTicketDao, etc.
-    │           │   ├── permission/                # RankDao, PermissionDao
-    │           │   ├── messenger/                 # MessengerDao
-    │           │   ├── room/                      # RoomDao, RoomSettingsDao, RoomModelDao, etc.
-    │           │   ├── item/                      # ItemDefinitionDao, ItemDao
-    │           │   ├── catalog/                   # CatalogDao
-    │           │   ├── badge/                     # BadgeDao
-    │           │   ├── moderation/                # ModerationDao
-    │           │   └── config/                    # ConfigDao
-    │           ├── entity/                    # Java record mappings (by domain)
-    │           │   ├── user/                      # UserEntity, UserDataEntity, etc.
-    │           │   ├── permission/                # RankEntity, PermissionEntity, etc.
-    │           │   ├── messenger/                 # FriendshipEntity, etc.
-    │           │   ├── room/                      # RoomEntity, RoomSettingsEntity, etc.
-    │           │   ├── item/                      # ItemDefinitionEntity, ItemEntity
-    │           │   ├── catalog/                   # CatalogPageEntity, CatalogItemEntity
-    │           │   ├── badge/                     # BadgeDefinitionEntity, UserBadgeEntity
-    │           │   ├── moderation/                # BanEntity, ModLogEntity, ChatLogEntity
-    │           │   └── config/                    # EmulatorSettingEntity, etc.
-    │           ├── repository/
-    │           │   └── JdbiUserRepository.java
-    │           └── InMemorySessionRepository.java
+    │   ├── concurrency/                   # Threading utilities
+    │   │   └── StripedRoomTaskScheduler.java  # Implements RoomTaskScheduler
+    │   ├── persistence/                   # Persistence Adapters
+    │   │   ├── dao/                       # Jdbi SqlObject interfaces (by domain)
+    │   │   │   ├── user/                      # UserDao, UserDataDao, UserTicketDao, etc.
+    │   │   │   ├── permission/                # RankDao, PermissionDao
+    │   │   │   ├── messenger/                 # MessengerDao
+    │   │   │   ├── room/                      # RoomDao, RoomSettingsDao, RoomModelDao, etc.
+    │   │   │   ├── item/                      # ItemDefinitionDao, ItemDao
+    │   │   │   ├── catalog/                   # CatalogDao
+    │   │   │   ├── badge/                     # BadgeDao
+    │   │   │   ├── moderation/                # ModerationDao
+    │   │   │   └── config/                    # ConfigDao
+    │   │   ├── entity/                    # Java record mappings (by domain)
+    │   │   │   ├── user/                      # UserEntity, UserDataEntity, etc.
+    │   │   │   ├── permission/                # RankEntity, PermissionEntity, etc.
+    │   │   │   ├── messenger/                 # FriendshipEntity, etc.
+    │   │   │   ├── room/                      # RoomEntity, RoomSettingsEntity, etc.
+    │   │   │   ├── item/                      # ItemDefinitionEntity, ItemEntity
+    │   │   │   ├── catalog/                   # CatalogPageEntity, CatalogItemEntity
+    │   │   │   ├── badge/                     # BadgeDefinitionEntity, UserBadgeEntity
+    │   │   │   ├── moderation/                # BanEntity, ModLogEntity, ChatLogEntity
+    │   │   │   └── config/                    # EmulatorSettingEntity, etc.
+    │   │   └── repository/
+    │   │       └── JdbiUserRepository.java
+    │   └── network/                       # Network Adapters
+    │       ├── codec/                       # Netty codecs
+    │       │   ├── ClientMessage.java           # Inbound packet DTO
+    │       │   ├── GameByteFrameDecoder.java    # 4-byte length framing
+    │       │   └── GamePacketDecoder.java       # Packet decoder
+    │       ├── handler/                     # Netty handlers
+    │       │   ├── GameHandler.java             # Routes to PacketDispatcher
+    │       │   └── PolicyFileHandler.java       # Flash policy XML
+    │       ├── packets/                     # Packet handling system
+    │       │   ├── IIncomingPacket.java         # Marker interface
+    │       │   ├── IOutgoingPacket.java         # Marker interface
+    │       │   ├── PacketDispatcher.java        # Central dispatcher
+    │       │   ├── parsers/                     # Bytes → Typed events
+    │       │   ├── handlers/                    # Events → Use cases
+    │       │   ├── composers/                   # Messages → Bytes
+    │       │   ├── incoming/                    # Incoming event DTOs
+    │       │   └── outgoing/                    # Outgoing message DTOs
+    │       ├── session/                     # Connection management
+    │       │   └── NettyConnection.java         # Implements NetworkConnection
+    │       ├── server/                      # TCP server
+    │       │   ├── GameServer.java              # Implements GameServerPort
+    │       │   └── GameChannelInitializer.java  # TCP pipeline
+    │       └── websocket/                   # WebSocket server
+    │           ├── WebSocketGameServer.java     # Implements GameServerPort
+    │           ├── WebSocketChannelInitializer.java
+    │           └── WebSocketFrameHandler.java
     └── config/
         └── DatabaseConfig.java          # HikariCP configuration
 ```
 
-**Inbound Adapters:** Receive external requests and translate them into calls to input ports.
+**Network Adapters:** Handle network communication with clients.
 - `server/GameServer`: Netty TCP server for Flash/Air clients (port 30000) - implements `GameServerPort`
 - `websocket/WebSocketGameServer`: Netty WebSocket server for Nitro HTML5 (port 2096) - implements `GameServerPort`
 - `session/NettyConnection`: Wraps Netty Channel - implements `NetworkConnection`
 
-**Outbound Adapters:** Implement output ports to interact with external systems.
+**Persistence Adapters:** Handle data storage.
 - `JdbiUserRepository`: Persists users to MySQL via Jdbi 3 + HikariCP
-- `InMemorySessionRepository`: Tracks online users in memory
+
+**Concurrency Adapters:** Handle threading concerns.
+- `StripedRoomTaskScheduler`: Implements `RoomTaskScheduler` for thread-safe room operations
 
 ### nova-app (Application Layer)
 
@@ -512,12 +524,12 @@ Repositories abstract data access. The domain defines interfaces, infrastructure
 
 ### Adding a New Feature
 
-1. **Define the port** in `nova-core/domain/port/in/` (e.g., `RoomUseCase`)
+1. **Define the port** in `nova-core/domain/api/` (e.g., `RoomUseCase`)
 2. **Create domain model** in `nova-core/domain/model/` (e.g., `Room`, `RoomId`)
-3. **Define repository port** in `nova-core/domain/port/out/` (e.g., `RoomRepository`)
+3. **Define repository port** in `nova-core/domain/repository/` (e.g., `RoomRepository`)
 4. **Implement use case** in `nova-app/service/` (e.g., `RoomService`)
-5. **Implement adapter** in `nova-infra/adapter/out/` (e.g., `MySqlRoomRepository`)
-6. **Add packet handlers** in `nova-infra/adapter/in/network/packets/`
+5. **Implement adapter** in `nova-infra/adapter/persistence/` (e.g., `JdbiRoomRepository`)
+6. **Add packet handlers** in `nova-infra/adapter/network/packets/`
 7. **Wire in Guice modules**
 
 ### Adding New Packets (Extending Architecture)
@@ -641,8 +653,8 @@ moveItem(room=42, item=100)      moveItem(room=42, item=100)
 #### Solution: RoomTaskScheduler
 
 ```
-nova-core/domain/port/in/RoomTaskScheduler.java     # Interface (port)
-nova-infra/.../concurrency/StripedRoomTaskScheduler.java  # Implementation
+nova-core/domain/api/room/RoomTaskScheduler.java           # Interface (port)
+nova-infra/adapter/concurrency/StripedRoomTaskScheduler.java  # Implementation
 ```
 
 **Interface:**

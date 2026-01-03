@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.messenger;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public record FriendListFragmentMessage(
     int totalFragments,
     int fragmentNumber,
     List<Friend> friends
-) implements IOutgoingPacket {
+) implements OutgoingPacket {
 
     /**
      * Represents a friend in the list.

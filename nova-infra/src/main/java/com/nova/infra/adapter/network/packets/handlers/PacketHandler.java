@@ -1,7 +1,7 @@
 package com.nova.infra.adapter.network.packets.handlers;
 
-import com.nova.core.domain.repository.network.NetworkConnection;
-import com.nova.infra.adapter.network.packets.IIncomingPacket;
+import com.nova.core.domain.gateway.NetworkConnection;
+import com.nova.infra.adapter.network.packets.IncomingPacket;
 
 /**
  * Interface for handling parsed incoming packets.
@@ -20,7 +20,7 @@ import com.nova.infra.adapter.network.packets.IIncomingPacket;
  *
  * @param <T> the type of incoming packet event this handler processes
  */
-public interface PacketHandler<T extends IIncomingPacket> {
+public interface PacketHandler<T extends IncomingPacket> {
 
     /**
      * Handles an incoming packet event.

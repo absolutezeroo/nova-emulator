@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.composers;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 import com.nova.infra.adapter.network.packets.annotations.ComposesPacket;
 import com.nova.infra.adapter.network.packets.outgoing.PacketBuffer;
 
@@ -23,7 +23,7 @@ import com.nova.infra.adapter.network.packets.outgoing.PacketBuffer;
  *
  * @param <T> The type of outgoing packet this composer handles
  */
-public abstract class PacketComposer<T extends IOutgoingPacket> {
+public abstract class PacketComposer<T extends OutgoingPacket> {
 
     private final int packetId;
 

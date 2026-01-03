@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.parsers;
 
-import com.nova.infra.adapter.network.packets.IIncomingPacket;
+import com.nova.infra.adapter.network.packets.IncomingPacket;
 import com.nova.infra.adapter.network.codec.ClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ public class PacketParserManager {
      * @param message The client message to parse
      * @return The parsed packet, or null if no parser is registered
      */
-    public IIncomingPacket parse(ClientMessage message) {
+    public IncomingPacket parse(ClientMessage message) {
         int headerId = message.headerId();
 
         PacketParser<?> parser = parsers.get(headerId);

@@ -1,6 +1,6 @@
 package com.nova.infra.adapter.network.packets.outgoing.marketplace;
 
-import com.nova.infra.adapter.network.packets.IOutgoingPacket;
+import com.nova.infra.adapter.network.packets.OutgoingPacket;
 
 /**
  * Message sent to client.
@@ -10,4 +10,4 @@ public record MarketplaceBuyOfferResultMessage(
     int newOfferId,
     int newPrice,
     int requestedOfferId
-) implements IOutgoingPacket {}
+) implements OutgoingPacket {}
