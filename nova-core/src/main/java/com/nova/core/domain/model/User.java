@@ -67,6 +67,7 @@ public class User {
         if (newFigure == null || newFigure.isBlank()) {
             throw new IllegalArgumentException("Figure cannot be empty");
         }
+
         this.data = data.withFigure(newFigure);
     }
 
@@ -80,7 +81,9 @@ public class User {
 
     public boolean spendCredits(int amount) {
         if (!currencies.canAffordCredits(amount)) return false;
+
         this.currencies = currencies.spendCredits(amount);
+
         return true;
     }
 
@@ -90,7 +93,9 @@ public class User {
 
     public boolean spendPixels(int amount) {
         if (!currencies.canAffordPixels(amount)) return false;
+
         this.currencies = currencies.spendPixels(amount);
+
         return true;
     }
 
@@ -100,7 +105,9 @@ public class User {
 
     public boolean spendDiamonds(int amount) {
         if (!currencies.canAffordDiamonds(amount)) return false;
+
         this.currencies = currencies.spendDiamonds(amount);
+
         return true;
     }
 
@@ -164,8 +171,11 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+
         if (o == null || getClass() != o.getClass()) return false;
+
         User user = (User) o;
+
         return Objects.equals(id, user.id);
     }
 

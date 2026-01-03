@@ -36,6 +36,7 @@ public record UserData(
 
     public UserData withFigure(String newFigure) {
         Objects.requireNonNull(newFigure, "Figure cannot be null");
+
         return new UserData(motto, newFigure, gender, homeRoomId, respectReceived, respectGiven, dailyRespectPoints, dailyPetRespect, achievementScore);
     }
 
@@ -45,6 +46,7 @@ public record UserData(
 
     public UserData withRespectGiven() {
         int newRemaining = Math.max(0, dailyRespectPoints - 1);
+
         return new UserData(motto, figure, gender, homeRoomId, respectReceived, respectGiven + 1, newRemaining, dailyPetRespect, achievementScore);
     }
 

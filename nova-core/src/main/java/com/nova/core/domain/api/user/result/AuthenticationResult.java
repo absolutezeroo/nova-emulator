@@ -1,4 +1,4 @@
-package com.nova.core.application.result;
+package com.nova.core.domain.api.user.result;
 
 import com.nova.core.domain.model.User;
 
@@ -47,6 +47,6 @@ public sealed interface AuthenticationResult {
      * Convenience method to get the user if successful.
      */
     default Optional<User> getUser() {
-        return this instanceof Success s ? Optional.of(s.user()) : Optional.empty();
+        return this instanceof Success(User user) ? Optional.of(user) : Optional.empty();
     }
 }

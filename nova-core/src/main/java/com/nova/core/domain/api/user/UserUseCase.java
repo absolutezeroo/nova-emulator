@@ -1,7 +1,6 @@
 package com.nova.core.domain.api.user;
 
-import com.nova.core.application.command.AuthenticateCommand;
-import com.nova.core.application.result.AuthenticationResult;
+import com.nova.core.domain.api.user.result.AuthenticationResult;
 import com.nova.core.domain.model.User;
 import com.nova.core.domain.model.UserId;
 
@@ -16,15 +15,12 @@ import java.util.Optional;
 public interface UserUseCase {
 
     /**
-     * Authenticates a user using a command object.
-     * <p>
-     * This is the preferred method for authentication, using the Command Pattern
-     * to decouple infrastructure concerns from domain logic.
+     * Authenticates a user via SSO ticket.
      *
-     * @param command the authentication command containing the SSO ticket
+     * @param ssoTicket the Single Sign-On ticket from the client
      * @return the authentication result (success with user, or failure with reason)
      */
-    AuthenticationResult authenticate(AuthenticateCommand command);
+    AuthenticationResult authenticateBySsoTicket(String ssoTicket);
 
     /**
      * Finds a user by their ID.

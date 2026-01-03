@@ -1,8 +1,7 @@
 package com.nova.infra.adapter.network.packets.handlers.handshake;
 
 import jakarta.inject.Inject;
-import com.nova.core.application.command.AuthenticateCommand;
-import com.nova.core.application.result.AuthenticationResult;
+import com.nova.core.domain.api.user.result.AuthenticationResult;
 import com.nova.core.domain.model.User;
 import com.nova.core.domain.api.user.UserUseCase;
 import com.nova.core.domain.gateway.NetworkConnection;
@@ -29,10 +28,9 @@ import org.slf4j.LoggerFactory;
  * Handles SSO ticket authentication requests.
  * <p>
  * Bridges the network layer to the domain layer:
- * 1. Receives parsed SsoTicketMessageEvent from the parser
- * 2. Creates an AuthenticateCommand for the domain
- * 3. Invokes the UserUseCase
- * 4. Sends appropriate response messages to the client
+ * 1. Receives parsed SSOTicketMessageEvent from the parser
+ * 2. Invokes the UserUseCase directly with the SSO ticket
+ * 3. Sends appropriate response messages to the client
  * <p>
  * Following Hexagonal Architecture, this handler is the adapter that
  * translates between infrastructure (packets) and domain (use cases).
@@ -56,13 +54,8 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
         LOGGER.debug("SSO login attempt from {} with ticket length {}",
                 connection.getIpAddress(), packet.ssoTicket().length());
 
-        // Create domain command
-        AuthenticateCommand command = new AuthenticateCommand(packet.ssoTicket());
+        var result = userUseCase.authenticateBySsoTicket(packet.ssoTicket());
 
-        // Invoke a domain use case
-        AuthenticationResult result = userUseCase.authenticate(command);
-
-        // Handle result using pattern matching (Java 21)
         switch (result) {
             case AuthenticationResult.Success success -> onSuccess(connection, success.user());
             case AuthenticationResult.Failure failure -> onFailure(connection, failure.reason());
@@ -79,21 +72,21 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
 
         // === Send authentication sequence ===
 
-        // 1. AuthOK - confirms authentication success
+        // Confirms authentication success
         connection.send(composerManager.compose(new AuthenticatedMessage()).getBuffer());
 
-        // 2. Availability Status - hotel is open
+        // Availability Status - hotel is open
         connection.send(composerManager.compose(
                 new AvailabilityStatusMessage(true, false, true)
         ).getBuffer());
 
-        // 3. Home Room - user's home room ID
+        // Home Room - user's home room ID
         int homeRoomId = user.getHomeRoomId() != null ? user.getHomeRoomId() : 0;
         connection.send(composerManager.compose(
                 new NavigatorHomeRoomMessage(homeRoomId, homeRoomId)
         ).getBuffer());
 
-        // 4. User Permissions - rank/security level
+        // User Permissions - rank/security level
         connection.send(composerManager.compose(
                 new UserPermissionsMessage(
                         user.getRank().getClubLevel(),  // 0=none, 1=HC, 2=VIP
@@ -102,12 +95,12 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
                 )
         ).getBuffer());
 
-        // 5. Club Subscription - HC/VIP status
+        // Club Subscription - HC/VIP status
         connection.send(composerManager.compose(
                 new UserSubscriptionMessage(
-                        "habbo_club",                   // Product name
-                        user.hasClub() ? 30 : 0,        // Days to period end
-                        user.hasClub() ? 1 : 0,         // Member periods
+                        "habbo_club",         // Product name
+                        user.hasClub() ? 30 : 0,         // Days to period end
+                        user.hasClub() ? 1 : 0,          // Member periods
                         0,                               // Periods subscribed ahead
                         1,                               // Response type
                         user.hasClub(),                  // Has ever been member
@@ -119,7 +112,7 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
                 )
         ).getBuffer());
 
-        // 6. User Info - full profile data
+        // User Info - full profile data
         connection.send(composerManager.compose(
                 new UserInfoMessage(
                         user.getId().value(),
@@ -139,27 +132,27 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
                 )
         ).getBuffer());
 
-        // 7. Credits
+        // Credits
         connection.send(composerManager.compose(
                 new UserCreditsMessage(String.valueOf(user.getCredits()))
         ).getBuffer());
 
-        // 8. Activity Points (pixels, diamonds)
+        // Activity Points (pixels, diamonds)
         connection.send(composerManager.compose(
                 UserCurrencyMessage.of(user.getPixels(), user.getDiamonds())
         ).getBuffer());
 
-        // 9. Avatar Effects (empty for now - no effects owned)
+        // Avatar Effects (empty for now - no effects owned)
         connection.send(composerManager.compose(
                 AvatarEffectsMessage.empty()
         ).getBuffer());
 
-        // 10. Navigator Settings (default window position)
+        // Navigator Settings (default window position)
         connection.send(composerManager.compose(
                 new NavigatorSettingsMessage(100, 100, 435, 535, false, 0)
         ).getBuffer());
 
-        // 11. Messenger Init (friend limits)
+        // Messenger Init (friend limits)
         connection.send(composerManager.compose(
                 new MessengerInitMessage(
                         user.hasClub() ? 1100 : 300,  // User's friend limit (HC gets more)
@@ -168,7 +161,7 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
                 )
         ).getBuffer());
 
-        // 12. Friend List (empty for now - no friends loaded)
+        // Friend List (empty for now - no friends loaded)
         connection.send(composerManager.compose(
                 FriendListFragmentMessage.empty()
         ).getBuffer());

@@ -49,8 +49,6 @@ The heart of the application. Contains pure business logic with **zero framework
 nova-core/
 └── src/main/java/com/nova/core/
     ├── application/
-    │   ├── command/        # Command DTOs for use cases
-    │   │   └── AuthenticateCommand.java
     │   └── result/         # Result DTOs from use cases
     │       └── AuthenticationResult.java
     ├── domain/

@@ -1,11 +1,10 @@
 package com.nova.app.service.user;
 
 import com.google.inject.Inject;
-import com.nova.core.application.command.AuthenticateCommand;
-import com.nova.core.application.result.AuthenticationResult;
-import com.nova.core.application.result.AuthenticationResult.Failure;
-import com.nova.core.application.result.AuthenticationResult.FailureReason;
-import com.nova.core.application.result.AuthenticationResult.Success;
+import com.nova.core.domain.api.user.result.AuthenticationResult;
+import com.nova.core.domain.api.user.result.AuthenticationResult.Failure;
+import com.nova.core.domain.api.user.result.AuthenticationResult.FailureReason;
+import com.nova.core.domain.api.user.result.AuthenticationResult.Success;
 import com.nova.core.domain.model.User;
 import com.nova.core.domain.model.UserId;
 import com.nova.core.domain.api.user.UserUseCase;
@@ -37,10 +36,15 @@ public class UserService implements UserUseCase {
     }
 
     @Override
-    public AuthenticationResult authenticate(AuthenticateCommand command) {
+    public AuthenticationResult authenticateBySsoTicket(String ssoTicket) {
         LOGGER.debug("Authenticating user with SSO ticket");
 
-        Optional<User> userOpt = userRepository.findBySsoTicket(command.ssoTicket());
+        if (ssoTicket == null || ssoTicket.isBlank()) {
+            LOGGER.warn("Authentication failed: SSO ticket is null or blank");
+            return new Failure(FailureReason.INVALID_TICKET);
+        }
+
+        Optional<User> userOpt = userRepository.findBySsoTicket(ssoTicket);
 
         if (userOpt.isEmpty()) {
             LOGGER.warn("Authentication failed: invalid SSO ticket");
@@ -50,7 +54,7 @@ public class UserService implements UserUseCase {
         User user = userOpt.get();
 
         // Invalidate ticket for security (single use)
-        userRepository.invalidateSsoTicket(command.ssoTicket());
+        userRepository.invalidateSsoTicket(ssoTicket);
 
         // Register in session repository
         sessionRepository.register(user);
