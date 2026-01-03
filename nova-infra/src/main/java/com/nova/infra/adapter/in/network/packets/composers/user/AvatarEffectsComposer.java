@@ -7,12 +7,22 @@ import com.nova.infra.adapter.in.network.packets.outgoing.user.AvatarEffectsMess
 import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
- * Composes AvatarEffects packet for client.
+ * Composes the user's effect inventory packet.
  */
 @ComposesPacket(Outgoing.USER_EFFECT_LIST)
 public class AvatarEffectsComposer extends PacketComposer<AvatarEffectsMessage> {
-@Override
+
+    @Override
     protected void write(PacketBuffer packet, AvatarEffectsMessage message) {
-        // No fields to write
+        packet.appendInt(message.effects().size());
+
+        for (AvatarEffectsMessage.Effect effect : message.effects()) {
+            packet.appendInt(effect.effectId());
+            packet.appendInt(effect.subType());
+            packet.appendInt(effect.duration());
+            packet.appendInt(effect.quantity());
+            packet.appendInt(effect.secondsRemaining());
+            packet.appendBoolean(effect.isPermanent());
+        }
     }
 }

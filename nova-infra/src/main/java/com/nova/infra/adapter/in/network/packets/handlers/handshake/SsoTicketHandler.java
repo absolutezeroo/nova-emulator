@@ -11,7 +11,11 @@ import com.nova.infra.adapter.in.network.packets.composers.PacketComposerManager
 import com.nova.infra.adapter.in.network.packets.handlers.PacketHandler;
 import com.nova.infra.adapter.in.network.packets.incoming.handshake.SSOTicketMessageEvent;
 import com.nova.infra.adapter.in.network.packets.outgoing.handshake.AuthenticatedMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.messenger.FriendListFragmentMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.messenger.MessengerInitMessage;
 import com.nova.infra.adapter.in.network.packets.outgoing.misc.AvailabilityStatusMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.navigator.NavigatorSettingsMessage;
+import com.nova.infra.adapter.in.network.packets.outgoing.user.AvatarEffectsMessage;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.NavigatorHomeRoomMessage;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCreditsMessage;
 import com.nova.infra.adapter.in.network.packets.outgoing.user.UserCurrencyMessage;
@@ -143,6 +147,30 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
         // 8. Activity Points (pixels, diamonds)
         connection.send(composerManager.compose(
                 UserCurrencyMessage.of(user.getPixels(), user.getDiamonds())
+        ).getBuffer());
+
+        // 9. Avatar Effects (empty for now - no effects owned)
+        connection.send(composerManager.compose(
+                AvatarEffectsMessage.empty()
+        ).getBuffer());
+
+        // 10. Navigator Settings (default window position)
+        connection.send(composerManager.compose(
+                new NavigatorSettingsMessage(100, 100, 435, 535, false, 0)
+        ).getBuffer());
+
+        // 11. Messenger Init (friend limits)
+        connection.send(composerManager.compose(
+                new MessengerInitMessage(
+                        user.hasClub() ? 1100 : 300,  // User's friend limit (HC gets more)
+                        300,                           // Normal friend limit
+                        1100                           // Extended friend limit (HC)
+                )
+        ).getBuffer());
+
+        // 12. Friend List (empty for now - no friends loaded)
+        connection.send(composerManager.compose(
+                FriendListFragmentMessage.empty()
         ).getBuffer());
 
         LOGGER.debug("Sent complete authentication sequence to {}", user.getUsername());

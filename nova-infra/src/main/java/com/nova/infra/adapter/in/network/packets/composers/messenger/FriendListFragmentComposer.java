@@ -7,13 +7,32 @@ import com.nova.infra.adapter.in.network.packets.outgoing.messenger.FriendListFr
 import com.nova.infra.adapter.in.network.packets.annotations.ComposesPacket;
 
 /**
- * Composes FriendListFragment packet for client.
+ * Composes the friend list fragment packet.
  */
 @ComposesPacket(Outgoing.MESSENGER_FRIENDS)
 public class FriendListFragmentComposer extends PacketComposer<FriendListFragmentMessage> {
-@Override
+
+    @Override
     protected void write(PacketBuffer packet, FriendListFragmentMessage message) {
         packet.appendInt(message.totalFragments());
         packet.appendInt(message.fragmentNumber());
+        packet.appendInt(message.friends().size());
+
+        for (FriendListFragmentMessage.Friend friend : message.friends()) {
+            packet.appendInt(friend.id());
+            packet.appendString(friend.username());
+            packet.appendInt(friend.gender());
+            packet.appendBoolean(friend.online());
+            packet.appendBoolean(friend.inRoom());
+            packet.appendString(friend.figure());
+            packet.appendInt(friend.categoryId());
+            packet.appendString(friend.motto());
+            packet.appendString(friend.realName());
+            packet.appendString("");  // Facebook ID (unused)
+            packet.appendBoolean(friend.persistedMessageUser());
+            packet.appendBoolean(friend.vipMember());
+            packet.appendBoolean(friend.pocketHabbo());
+            packet.appendShort((short) friend.relationshipStatus());
+        }
     }
 }
