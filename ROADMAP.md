@@ -211,31 +211,28 @@ The `PacketRegistry.java` file can be deleted once all parsers/composers are mig
 | `SsoTicketHandler`   | 2419      | SSO authentication + user load   |
 | `UniqueIDHandler`    | 2490      | Machine ID tracking              |
 
-**`SsoTicketHandler` Response Packets:**
-- ✅ AuthenticatedMessage (server confirms auth)
-- ✅ UserInfoMessage (user profile data)
-- ✅ UserCreditsMessage (currency balance)
-
 **`UniqueIDHandler` Response:**
 - ✅ UniqueMachineIDMessage (server-generated machine ID)
 
 **WebSocket Support:**
 - ✅ `WebSocketBinaryEncoder` - Wraps ByteBuf in BinaryWebSocketFrame for Nitro client
 
-**Missing Packets for Full Hotel View:**
+**Complete Authentication Sequence (12 packets):**
 
-| #  | Message Class               | Header              | Purpose             |
-|----|-----------------------------|---------------------|---------------------|
-| 1  | `UserHomeRoomMessage`       | USER_HOME_ROOM      | Home room ID        |
-| 2  | `AvailabilityStatusMessage` | AVAILABILITY_STATUS | Server status       |
-| 3  | `UserPermissionsMessage`    | USER_PERMISSIONS    | Rank/permissions    |
-| 4  | `UserEffectsListMessage`    | USER_EFFECTS        | Effect inventory    |
-| 5  | `UserClothesMessage`        | USER_CLOTHES        | Saved outfits       |
-| 6  | `NavigatorSettingsMessage`  | NAVIGATOR_SETTINGS  | Nav categories      |
-| 7  | `FavoriteRoomsCountMessage` | FAVORITE_ROOMS      | Favorites count     |
-| 8  | `MessengerInitMessage`      | MESSENGER_INIT      | Friends list config |
-| 9  | `FriendListFragmentMessage` | FRIEND_LIST         | Friends data        |
-| 10 | `UserClubMessage`           | USER_SUBSCRIPTION   | HC status           |
+| #  | Message Class               | Status | Purpose                    |
+|----|-----------------------------|----|-------------------------------|
+| 1  | `AuthenticatedMessage`      | ✅ | Server confirms auth          |
+| 2  | `AvailabilityStatusMessage` | ✅ | Hotel is open                 |
+| 3  | `NavigatorHomeRoomMessage`  | ✅ | User's home room ID           |
+| 4  | `UserPermissionsMessage`    | ✅ | Rank/security level           |
+| 5  | `UserSubscriptionMessage`   | ✅ | HC/VIP club status            |
+| 6  | `UserInfoMessage`           | ✅ | Full profile data             |
+| 7  | `UserCreditsMessage`        | ✅ | Credits balance               |
+| 8  | `UserCurrencyMessage`       | ✅ | Pixels, diamonds              |
+| 9  | `AvatarEffectsMessage`      | ✅ | Effect inventory (empty)      |
+| 10 | `NavigatorSettingsMessage`  | ✅ | Navigator window config       |
+| 11 | `MessengerInitMessage`      | ✅ | Friend limits                 |
+| 12 | `FriendListFragmentMessage` | ✅ | Friends list (empty)          |
 
 ### 1.3 Database Layer (IMPLEMENTED)
 
