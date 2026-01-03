@@ -60,8 +60,10 @@ nova-emulator/
 │   └── adapter/
 │       ├── in/network/  # Inbound adapters (Netty servers, packet system)
 │       └── out/persistence/  # Outbound adapters (Jdbi DAOs, repositories)
-│           ├── dao/         # Jdbi SqlObject interfaces
-│           ├── entity/      # Database record mappings
+│           ├── dao/         # Jdbi SqlObject interfaces (organized by domain)
+│           │   └── user/, permission/, messenger/, room/, item/, catalog/, badge/, moderation/, config/
+│           ├── entity/      # Database record mappings (organized by domain)
+│           │   └── user/, permission/, messenger/, room/, item/, catalog/, badge/, moderation/, config/
 │           └── repository/  # UserRepository implementations
 ├── nova-app/            # Application bootstrap and DI configuration
 ├── database/            # SQL schema files

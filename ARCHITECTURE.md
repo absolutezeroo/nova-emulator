@@ -111,15 +111,26 @@ nova-infra/
     │   │           └── WebSocketFrameHandler.java
     │   └── out/            # Outbound Adapters (driven by application)
     │       └── persistence/
-    │           ├── dao/                       # Jdbi SqlObject interfaces
-    │           │   ├── UserDao.java               # users table queries
-    │           │   ├── UserDataDao.java           # user_data table
-    │           │   ├── UserTicketDao.java         # SSO tickets
-    │           │   └── UserCurrencyDao.java       # Currencies
-    │           ├── entity/                    # Java record mappings
-    │           │   ├── UserEntity.java
-    │           │   ├── UserDataEntity.java
-    │           │   └── UserTicketEntity.java
+    │           ├── dao/                       # Jdbi SqlObject interfaces (by domain)
+    │           │   ├── user/                      # UserDao, UserDataDao, UserTicketDao, etc.
+    │           │   ├── permission/                # RankDao, PermissionDao
+    │           │   ├── messenger/                 # MessengerDao
+    │           │   ├── room/                      # RoomDao, RoomSettingsDao, RoomModelDao, etc.
+    │           │   ├── item/                      # ItemDefinitionDao, ItemDao
+    │           │   ├── catalog/                   # CatalogDao
+    │           │   ├── badge/                     # BadgeDao
+    │           │   ├── moderation/                # ModerationDao
+    │           │   └── config/                    # ConfigDao
+    │           ├── entity/                    # Java record mappings (by domain)
+    │           │   ├── user/                      # UserEntity, UserDataEntity, etc.
+    │           │   ├── permission/                # RankEntity, PermissionEntity, etc.
+    │           │   ├── messenger/                 # FriendshipEntity, etc.
+    │           │   ├── room/                      # RoomEntity, RoomSettingsEntity, etc.
+    │           │   ├── item/                      # ItemDefinitionEntity, ItemEntity
+    │           │   ├── catalog/                   # CatalogPageEntity, CatalogItemEntity
+    │           │   ├── badge/                     # BadgeDefinitionEntity, UserBadgeEntity
+    │           │   ├── moderation/                # BanEntity, ModLogEntity, ChatLogEntity
+    │           │   └── config/                    # EmulatorSettingEntity, etc.
     │           ├── repository/
     │           │   └── JdbiUserRepository.java
     │           └── InMemorySessionRepository.java
