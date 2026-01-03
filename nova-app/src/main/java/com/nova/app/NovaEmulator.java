@@ -4,8 +4,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nova.app.config.CoreModule;
 import com.nova.app.config.InfrastructureModule;
-import com.nova.infra.adapter.in.network.server.GameServer;
-import com.nova.infra.adapter.in.network.websocket.WebSocketGameServer;
+import com.nova.infra.adapter.network.server.GameServer;
+import com.nova.infra.adapter.network.websocket.WebSocketGameServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

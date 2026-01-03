@@ -1,0 +1,24 @@
+package com.nova.infra.adapter.network.packets.composers.catalog;
+
+import com.nova.infra.adapter.network.packets.composers.PacketComposer;
+import com.nova.infra.adapter.network.packets.headers.Outgoing;
+import com.nova.infra.adapter.network.packets.outgoing.PacketBuffer;
+import com.nova.infra.adapter.network.packets.outgoing.catalog.PurchaseOKMessage;
+import com.nova.infra.adapter.network.packets.annotations.ComposesPacket;
+
+/**
+ * Composes PurchaseOK packet for client.
+ */
+@ComposesPacket(Outgoing.CATALOG_PURCHASE_OK)
+public class PurchaseOKComposer extends PacketComposer<PurchaseOKMessage> {
+@Override
+    protected void write(PacketBuffer packet, PurchaseOKMessage message) {
+        packet.appendInt(message.offerId());
+        packet.appendString(message.localizationId());
+        packet.appendBoolean(message.rent());
+        packet.appendInt(message.priceCredits());
+        packet.appendInt(message.priceActivityPoints());
+        packet.appendInt(message.priceActivityPointsType());
+        packet.appendBoolean(message.giftable());
+    }
+}

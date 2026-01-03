@@ -1,0 +1,19 @@
+package com.nova.infra.adapter.network.packets.parsers.guide;
+
+import com.nova.infra.adapter.network.packets.parsers.PacketParser;
+import com.nova.infra.adapter.network.packets.headers.Incoming;
+import com.nova.infra.adapter.network.codec.ClientMessage;
+import com.nova.infra.adapter.network.packets.incoming.guide.GuideSessionInviteRequesterMessageEvent;
+import com.nova.infra.adapter.network.packets.annotations.ParsesPacket;
+
+/**
+ * Parses GuideSessionInviteRequester packet from client.
+ */
+@ParsesPacket(Incoming.GUIDE_SESSION_INVITE_REQUESTER)
+public class GuideSessionInviteRequesterParser extends PacketParser<GuideSessionInviteRequesterMessageEvent> {
+@Override
+    public GuideSessionInviteRequesterMessageEvent parse(ClientMessage message) {
+        // No fields to parse
+        return new GuideSessionInviteRequesterMessageEvent();
+    }
+}

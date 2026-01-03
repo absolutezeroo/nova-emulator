@@ -2,7 +2,7 @@ package com.nova.app.config;
 
 import com.google.inject.AbstractModule;
 import com.nova.app.service.user.UserService;
-import com.nova.core.domain.port.in.user.UserUseCase;
+import com.nova.core.domain.api.user.UserUseCase;
 
 /**
  * Guice module for Core/Domain layer bindings.
