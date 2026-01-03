@@ -12,7 +12,13 @@ A modern Habbo Hotel emulator built with Hexagonal Architecture in Java 21.
 
 ### 1. Database Setup
 
-Create a MySQL database and import your Habbo CMS schema. The emulator expects a `users` table with standard columns (`id`, `username`, `motto`, `look`, `credits`, `account_created`, `auth_ticket`).
+Create a MySQL database and import the schema from `database/schema.sql`:
+
+```bash
+mysql -u root -p nova < database/schema.sql
+```
+
+The schema uses a fully normalized structure with proper foreign key relationships.
 
 ### 2. Configuration
 
@@ -50,21 +56,16 @@ nova-emulator/
 │   └── domain/port/
 │       ├── in/          # Input ports (UserUseCase, ConnectionListener)
 │       └── out/         # Output ports (Repositories, NetworkConnection, GameServerPort)
-├── nova-infra/          # Infrastructure (Netty servers, MySQL repositories)
-│   └── adapter/in/network/
-│       ├── codec/       # Netty codecs (ClientMessage, decoders)
-│       ├── handler/     # Netty handlers (GameHandler, PolicyFileHandler)
-│       ├── packets/     # Packet system (~1800 files)
-│       │   ├── headers/ # Incoming.java (~470), Outgoing.java (~472)
-│       │   ├── incoming/  # Event records from client (~459)
-│       │   ├── outgoing/  # Message records to client (~447)
-│       │   ├── parsers/   # Parse client bytes → events (~457)
-│       │   ├── composers/ # Compose messages → bytes (~447)
-│       │   └── handlers/  # Business logic handlers
-│       ├── session/     # Connection management (NettyConnection)
-│       ├── server/      # TCP server (GameServer, GameChannelInitializer)
-│       └── websocket/   # WebSocket server
+├── nova-infra/          # Infrastructure (Netty servers, Jdbi repositories)
+│   └── adapter/
+│       ├── in/network/  # Inbound adapters (Netty servers, packet system)
+│       └── out/persistence/  # Outbound adapters (Jdbi DAOs, repositories)
+│           ├── dao/         # Jdbi SqlObject interfaces
+│           ├── entity/      # Database record mappings
+│           └── repository/  # UserRepository implementations
 ├── nova-app/            # Application bootstrap and DI configuration
+├── database/            # SQL schema files
+│   └── schema.sql       # Normalized database schema
 └── pom.xml              # Parent POM
 ```
 
@@ -76,12 +77,11 @@ All packets are migrated from Nitro client with complete protocol coverage:
 |-----------|-------|-------------|
 | Incoming Headers | ~470 | Client → Server packet IDs |
 | Outgoing Headers | ~472 | Server → Client packet IDs |
-| Parsers | ~457 | Parse client requests |
-| Composers | ~447 | Compose server responses |
-| Event Records | ~459 | Incoming data structures |
-| Message Records | ~447 | Outgoing data structures |
+| Parsers | ~457 | Parse client requests (`@ParsesPacket`) |
+| Composers | ~447 | Compose server responses (`@ComposesPacket`) |
+| Handlers | Auto-discovered | Business logic (`@HandlesPacket`) |
 
-Packets are auto-registered via `PacketRegistry` at startup.
+Packets are **auto-discovered** via annotation scanning (ClassGraph) at startup - no manual registration needed.
 
 ## Tech Stack
 
@@ -91,7 +91,7 @@ Packets are auto-registered via `PacketRegistry` at startup.
 | Build | Maven |
 | DI | Google Guice |
 | Networking | Netty 4.1 |
-| Database | MySQL + HikariCP |
+| Database | MySQL + Jdbi 3 + HikariCP |
 | Logging | SLF4J + Logback |
 | Testing | JUnit 5 + Mockito + AssertJ |
 

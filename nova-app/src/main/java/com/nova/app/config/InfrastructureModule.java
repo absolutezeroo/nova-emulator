@@ -16,9 +16,11 @@ import com.nova.infra.adapter.in.network.server.GameServer;
 import com.nova.infra.adapter.in.network.websocket.WebSocketChannelInitializer;
 import com.nova.infra.adapter.in.network.websocket.WebSocketGameServer;
 import com.nova.infra.adapter.out.persistence.InMemorySessionRepository;
-import com.nova.infra.adapter.out.persistence.MySqlUserRepository;
+import com.nova.infra.adapter.out.persistence.repository.JdbiUserRepository;
 import com.nova.infra.config.DatabaseConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 /**
  * Guice module for Infrastructure layer bindings.
@@ -46,6 +48,8 @@ public class InfrastructureModule extends AbstractModule {
         bind(SessionRepository.class).to(InMemorySessionRepository.class).in(Singleton.class);
     }
 
+    // === Database Layer ===
+
     @Provides
     @Singleton
     public HikariDataSource provideDataSource() {
@@ -57,8 +61,23 @@ public class InfrastructureModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public UserRepository provideUserRepository(HikariDataSource dataSource) {
-        return new MySqlUserRepository(dataSource);
+    public Jdbi provideJdbi(HikariDataSource dataSource) {
+        Jdbi jdbi = Jdbi.create(dataSource);
+
+        // Install SqlObject plugin for annotation-based DAOs
+        jdbi.installPlugin(new SqlObjectPlugin());
+
+        // Configure strict mode for better error messages
+        jdbi.getConfig().get(org.jdbi.v3.core.statement.SqlStatements.class)
+            .setUnusedBindingAllowed(false);
+
+        return jdbi;
+    }
+
+    @Provides
+    @Singleton
+    public UserRepository provideUserRepository(Jdbi jdbi) {
+        return new JdbiUserRepository(jdbi);
     }
 
     // === Packet System ===

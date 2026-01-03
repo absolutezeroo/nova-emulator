@@ -32,7 +32,7 @@
 | Parsers (auto-registered)   | ✅ Complete       | **~457 parsers**                |
 | Composers (auto-registered) | ✅ Complete       | **~447 composers**              |
 | Handlers (business logic)   | ⚠️ **1 of ~50+** | Only `SsoTicketHandler`         |
-| Database Adapters           | ⚠️ Partial       | `MySqlUserRepository` basic     |
+| Database Adapters           | ✅ Complete       | Jdbi 3 + normalized schema      |
 | Room Engine                 | ❌ Missing        | No RoomRepository               |
 | Concurrency Model           | ❌ Missing        | No StripedRoomTaskScheduler     |
 | Pathfinding                 | ❌ Missing        | No A* implementation            |
@@ -224,59 +224,61 @@ The `PacketRegistry.java` file can be deleted once all parsers/composers are mig
 | 9  | `FriendListFragmentMessage` | FRIEND_LIST         | Friends data        |
 | 10 | `UserClubMessage`           | USER_SUBSCRIPTION   | HC status           |
 
-### 1.3 Expand MySqlUserRepository
+### 1.3 Database Layer (IMPLEMENTED)
 
-**Current Query (only 6 columns):**
-```sql
-SELECT id, username, motto, look, credits, account_created FROM users
+**Status:** ✅ Complete - Using Jdbi 3 with normalized schema
+
+**Schema:** `database/schema.sql` - Fully normalized with foreign key relationships
+
+**Normalized Tables:**
+| Table              | Purpose                                    |
+|--------------------|--------------------------------------------|
+| `users`            | Core identity (id, username, email, rank)  |
+| `user_data`        | Profile data (motto, figure, online status)|
+| `user_tickets`     | SSO authentication tokens (single-use)     |
+| `user_currencies`  | Flexible multi-currency (credits, pixels)  |
+| `user_settings`    | User preferences                           |
+| `ranks`            | Rank definitions                           |
+| `permissions`      | Available permissions                      |
+| `rank_permissions` | Many-to-many rank ↔ permission             |
+
+**Jdbi DAOs:**
+```java
+// UserDao - Core identity queries
+@SqlQuery("SELECT ... FROM users WHERE id = :id")
+Optional<UserEntity> findById(@Bind("id") int id);
+
+// UserDataDao - Profile operations
+@SqlUpdate("UPDATE user_data SET motto = :motto, figure = :figure WHERE user_id = :userId")
+int updateProfile(@Bind("userId") int userId, ...);
+
+// UserTicketDao - SSO validation
+@SqlQuery("SELECT ... FROM user_tickets WHERE ticket = :ticket AND is_used = FALSE")
+Optional<UserTicketEntity> findValidTicket(@Bind("ticket") String ticket);
+
+// UserCurrencyDao - Multi-currency
+@SqlUpdate("INSERT INTO user_currencies ... ON DUPLICATE KEY UPDATE amount = amount + :amount")
+int addCurrency(@Bind("userId") int userId, @Bind("type") int type, @Bind("amount") int amount);
 ```
 
-**Required Columns (from legacy `HabboInfo.java`):**
-
-| Column                 | Type      | Purpose           |
-|------------------------|-----------|-------------------|
-| `rank`                 | INT       | User rank ID      |
-| `home_room`            | INT       | Default room      |
-| `gender`               | ENUM      | M/F               |
-| `ip_register`          | VARCHAR   | Registration IP   |
-| `ip_current`           | VARCHAR   | Last login IP     |
-| `online`               | TINYINT   | Online status     |
-| `last_login`           | TIMESTAMP | Last login time   |
-| `last_online`          | TIMESTAMP | Last online time  |
-| `pixels`               | INT       | Duckets currency  |
-| `points`               | INT       | Diamonds currency |
-| `vip_points`           | INT       | VIP points        |
-| `machine_id`           | VARCHAR   | Hardware ID       |
-| `account_day_of_birth` | VARCHAR   | Birthday          |
-
-**Updated User Domain Model:**
-```java
-// nova-core/domain/model/User.java
-public class User {
-    private final UserId id;
-    private final String username;
-    private String motto;
-    private String figure;
-    private int credits;
-    private int pixels;          // ADD
-    private int diamonds;        // ADD
-    private int rankId;          // ADD
-    private int homeRoom;        // ADD
-    private Gender gender;       // ADD
-    private Instant lastLogin;   // ADD
-    private boolean online;      // ADD
-    // ... behavior methods
-}
+**JdbiUserRepository Flow:**
+```
+findBySsoTicket(ticket)
+    ├── UserTicketDao.findValidTicket()  → validates SSO
+    ├── UserDao.findById()               → loads identity
+    ├── UserDataDao.findByUserId()       → loads profile
+    └── UserCurrencyDao.getCredits()     → loads currencies
+    → Returns combined User domain model
 ```
 
 ### 1.4 Port (Input) & Adapter (Output) Summary
 
-| Input Port (nova-core)          | Output Adapter (nova-infra)             |
-|---------------------------------|-----------------------------------------|
-| `UserUseCase.authenticate()`    | `MySqlUserRepository.findBySsoTicket()` |
-| `UserUseCase.getUserInfo()`     | `MySqlUserRepository.findById()`        |
-| —                               | `MySqlUserRepository.updateLastLogin()` |
-| `SessionRepository.addOnline()` | `InMemorySessionRepository`             |
+| Input Port (nova-core)          | Output Adapter (nova-infra)              |
+|---------------------------------|------------------------------------------|
+| `UserUseCase.authenticate()`    | `JdbiUserRepository.findBySsoTicket()`   |
+| `UserUseCase.getUserInfo()`     | `JdbiUserRepository.findById()`          |
+| —                               | `UserDataDao.updateLoginInfo()`          |
+| `SessionRepository.addOnline()` | `InMemorySessionRepository`              |
 
 ---
 
@@ -538,32 +540,34 @@ xxxxxxxxxxxx
 ### 3.5 Database Adapter
 
 ```java
-// nova-infra/adapter/out/persistence/MySqlRoomRepository.java
-public class MySqlRoomRepository implements RoomRepository {
+// nova-infra/adapter/out/persistence/dao/RoomDao.java
+@RegisterConstructorMapper(RoomEntity.class)
+public interface RoomDao {
 
-    private final HikariDataSource dataSource;
+    @SqlQuery("""
+        SELECT r.id, r.owner_id AS ownerId, r.name, r.description,
+               r.model_name AS modelName, r.state, r.score
+        FROM rooms r
+        WHERE r.id = :id
+        """)
+    Optional<RoomEntity> findById(@Bind("id") int id);
+
+    @SqlQuery("SELECT * FROM room_models WHERE name = :name")
+    @RegisterConstructorMapper(RoomModelEntity.class)
+    Optional<RoomModelEntity> findModelByName(@Bind("name") String name);
+}
+
+// nova-infra/adapter/out/persistence/repository/JdbiRoomRepository.java
+public class JdbiRoomRepository implements RoomRepository {
+
+    private final Jdbi jdbi;
     private final Map<String, RoomLayout> layoutCache = new ConcurrentHashMap<>();
 
     @Override
     public Optional<Room> findById(int roomId) {
-        String sql = """
-            SELECT r.*, rm.door_x, rm.door_y, rm.door_dir, rm.heightmap
-            FROM rooms r
-            LEFT JOIN room_models rm ON r.model = rm.name
-            WHERE r.id = ?
-            """;
-        // Execute and map to Room
-    }
-
-    @Override
-    public Optional<RoomLayout> findLayoutByName(String name) {
-        // Check cache first
-        if (layoutCache.containsKey(name)) {
-            return Optional.of(layoutCache.get(name));
-        }
-
-        String sql = "SELECT * FROM room_models WHERE name = ?";
-        // Execute, create RoomLayout, cache and return
+        return jdbi.withExtension(RoomDao.class, dao ->
+            dao.findById(roomId).map(this::toDomainModel)
+        );
     }
 }
 ```
@@ -872,101 +876,45 @@ private void startRoomCycle(Room room) {
 
 ## Database Schema
 
-### Users Table (Extended)
-```sql
-SELECT
-    id, username, password, mail, account_created, last_login,
-    motto, look, gender, rank, credits, pixels, points, vip_points,
-    online, auth_ticket, ip_register, ip_current, machine_id,
-    home_room, account_day_of_birth
-FROM users;
+**Location:** `database/schema.sql`
+
+The schema is fully normalized with proper foreign key relationships and CASCADE deletes.
+
+### Core Tables Structure
+
+```
+Core Identity:
+├── users              # id, username, email, password_hash, rank_id, created_at
+├── user_data          # user_id, motto, figure, gender, online, last_login_at...
+├── user_tickets       # SSO tokens (id, user_id, ticket, expires_at, is_used)
+├── user_currencies    # (user_id, currency_type, amount) - flexible multi-currency
+└── user_settings      # User preferences (volumes, navigator position, etc.)
+
+Permissions (Flexible Many-to-Many):
+├── ranks                    # id, name, badge, level, prefix, prefix_color
+├── permission_categories    # Grouping for permissions
+├── permissions              # id, permission_key, name, description, is_dangerous
+├── rank_permissions         # (rank_id, permission_id) - permissions per rank
+└── user_permissions         # (user_id, permission_id, granted) - individual overrides
+
+Rooms (Normalized):
+├── rooms              # Core data: id, owner_id, name, description, model_name, state
+├── room_settings      # Configurable options: max_users, chat_*, trade_state, etc.
+├── room_decoration    # Visual: background_color, mood_light_data, jukebox_*
+├── room_models        # Heightmaps: name, heightmap, door_x, door_y, door_dir
+├── room_rights        # (room_id, user_id)
+├── room_bans          # (room_id, user_id, banned_by_id, expires_at)
+└── room_mutes         # (room_id, user_id, muted_by_id, expires_at)
 ```
 
-### Rooms Table
-```sql
-CREATE TABLE rooms (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    owner_id INT NOT NULL,
-    owner_name VARCHAR(50),
-    name VARCHAR(50) NOT NULL,
-    description VARCHAR(512),
-    password VARCHAR(20),
-    state ENUM('open', 'locked', 'password', 'invisible') DEFAULT 'open',
-    users INT DEFAULT 0,
-    users_max INT DEFAULT 25,
-    score INT DEFAULT 0,
-    category INT DEFAULT 0,
-    model VARCHAR(255) NOT NULL,
+### Key Schema Features
 
-    -- Floor/Wall appearance
-    paper_floor VARCHAR(5) DEFAULT '0.0',
-    paper_wall VARCHAR(5) DEFAULT '0.0',
-    paper_landscape VARCHAR(5) DEFAULT '0.0',
-    thickness_wall INT DEFAULT 0,
-    thickness_floor INT DEFAULT 0,
-    wall_height INT DEFAULT -1,
-
-    -- Permissions
-    allow_other_pets TINYINT(1) DEFAULT 0,
-    allow_other_pets_eat TINYINT(1) DEFAULT 0,
-    allow_walkthrough TINYINT(1) DEFAULT 1,
-    allow_hidewall TINYINT(1) DEFAULT 0,
-
-    -- Chat settings
-    chat_mode INT DEFAULT 0,
-    chat_weight INT DEFAULT 1,
-    chat_speed INT DEFAULT 1,
-    chat_hearing_distance INT DEFAULT 50,
-    chat_protection INT DEFAULT 2,
-
-    -- Moderation
-    who_can_mute INT DEFAULT 0,
-    who_can_kick INT DEFAULT 0,
-    who_can_ban INT DEFAULT 0,
-
-    -- Features
-    guild_id INT DEFAULT 0,
-    roller_speed INT DEFAULT 4,
-    override_model TINYINT(1) DEFAULT 0,
-    is_public TINYINT(1) DEFAULT 0,
-    is_staff_picked TINYINT(1) DEFAULT 0,
-    promoted TINYINT(1) DEFAULT 0,
-    trade_mode INT DEFAULT 2,
-    move_diagonally TINYINT(1) DEFAULT 1,
-    jukebox_active TINYINT(1) DEFAULT 0,
-    hidewired TINYINT(1) DEFAULT 0,
-
-    tags VARCHAR(255),
-    moodlight_data VARCHAR(255)
-);
-```
-
-### Room Models Table
-```sql
-CREATE TABLE room_models (
-    name VARCHAR(100) PRIMARY KEY,
-    door_x SMALLINT NOT NULL,
-    door_y SMALLINT NOT NULL,
-    door_dir INT NOT NULL DEFAULT 2,
-    heightmap MEDIUMTEXT NOT NULL
-);
-
--- Example model
-INSERT INTO room_models (name, door_x, door_y, door_dir, heightmap) VALUES
-('model_a', 3, 5, 2, 'xxxxxxxxxxxx\r\nx222222222xx\r\nx222222222xx\r\nx222222222xx\r\nx222222222xx\r\nx222222222xx\r\nx222222222xx\r\nxxxxxxxxxxxx');
-```
-
-### Room Models Custom (User-created)
-```sql
-CREATE TABLE room_models_custom (
-    id INT PRIMARY KEY,  -- room_id
-    name VARCHAR(100),
-    door_x SMALLINT NOT NULL,
-    door_y SMALLINT NOT NULL,
-    door_dir INT NOT NULL DEFAULT 2,
-    heightmap MEDIUMTEXT NOT NULL
-);
-```
+- **Proper foreign keys** with `ON DELETE CASCADE`
+- **ENUM types** for state fields (gender, room state, chat mode)
+- **Flexible permissions** via many-to-many (not hardcoded booleans)
+- **Multi-currency** support via `user_currencies` table
+- **SSO tickets** with expiration and usage tracking
+- **Separated room tables** for settings, decoration, rights
 
 ---
 
@@ -979,7 +927,11 @@ Week 1-2: PHASE 1 - Authentication
 │   ├── PacketScanner with ClassGraph
 │   └── Base classes updated (backwards compatible)
 ├── 1.2 Complete authentication flow (Hotel View handlers)
-├── 1.3 Expand MySqlUserRepository
+├── 1.3 Database Layer ✅ DONE
+│   ├── Jdbi 3 integration with SqlObject plugin
+│   ├── Normalized schema (database/schema.sql)
+│   ├── UserDao, UserDataDao, UserTicketDao, UserCurrencyDao
+│   └── JdbiUserRepository combining normalized tables
 └── 1.4 Test: Client → Hotel View
 
 Week 3-4: PHASE 2 - Concurrency

@@ -5,6 +5,8 @@ import com.nova.infra.adapter.in.network.packets.outgoing.PacketBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +21,22 @@ public class PacketComposerManager {
     private final Map<Class<?>, PacketComposer<?>> composers = new HashMap<>();
 
     /**
+     * Registers a composer, extracting the message type via reflection.
+     * Used by PacketScanner for auto-registration.
+     *
+     * @param composer The composer to register
+     */
+    @SuppressWarnings("unchecked")
+    public void register(PacketComposer<?> composer) {
+        Class<?> messageType = extractMessageType(composer.getClass());
+        if (messageType == null) {
+            LOGGER.error("Cannot determine message type for composer: {}", composer.getClass().getName());
+            return;
+        }
+        register((Class<IOutgoingPacket>) messageType, (PacketComposer<IOutgoingPacket>) composer);
+    }
+
+    /**
      * Registers a composer for a specific message type.
      *
      * @param messageType The message class this composer handles
@@ -31,6 +49,34 @@ public class PacketComposerManager {
         }
 
         composers.put(messageType, composer);
+    }
+
+    /**
+     * Extracts the generic type parameter T from PacketComposer&lt;T&gt;.
+     */
+    private Class<?> extractMessageType(Class<?> composerClass) {
+        Type type = composerClass.getGenericSuperclass();
+
+        while (type != null) {
+            if (type instanceof ParameterizedType pt) {
+                Type rawType = pt.getRawType();
+
+                if (rawType == PacketComposer.class) {
+                    Type arg = pt.getActualTypeArguments()[0];
+
+                    if (arg instanceof Class<?> cls) {
+                        return cls;
+                    }
+                }
+            }
+
+            if (type instanceof Class<?> cls) {
+                type = cls.getGenericSuperclass();
+            } else {
+                break;
+            }
+        }
+        return null;
     }
 
     /**

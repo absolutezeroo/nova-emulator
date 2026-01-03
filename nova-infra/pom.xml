@@ -51,6 +51,20 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Jdbi 3 - SQL Convenience Layer -->
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-sqlobject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-guice</artifactId>
+        </dependency>
+
         <!-- Serialization -->
         <dependency>
             <groupId>com.google.code.gson</groupId>

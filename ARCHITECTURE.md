@@ -16,7 +16,7 @@ NovaEmulator follows **Hexagonal Architecture** (also known as Ports and Adapter
 │  ┌─────────────────────┐                         ┌─────────────────────────┐  │
 │  │   Inbound Adapters  │                         │    Outbound Adapters    │  │
 │  │                     │                         │                         │  │
-│  │  • GameServer       │                         │  • MySqlUserRepository  │  │
+│  │  • GameServer       │                         │  • JdbiUserRepository   │  │
 │  │    (TCP:30000)      │                         │  • InMemorySession      │  │
 │  │  • WebSocketServer  │                         │    Repository           │  │
 │  │    (WS:2096)        │                         │                         │  │
@@ -111,7 +111,17 @@ nova-infra/
     │   │           └── WebSocketFrameHandler.java
     │   └── out/            # Outbound Adapters (driven by application)
     │       └── persistence/
-    │           ├── MySqlUserRepository.java
+    │           ├── dao/                       # Jdbi SqlObject interfaces
+    │           │   ├── UserDao.java               # users table queries
+    │           │   ├── UserDataDao.java           # user_data table
+    │           │   ├── UserTicketDao.java         # SSO tickets
+    │           │   └── UserCurrencyDao.java       # Currencies
+    │           ├── entity/                    # Java record mappings
+    │           │   ├── UserEntity.java
+    │           │   ├── UserDataEntity.java
+    │           │   └── UserTicketEntity.java
+    │           ├── repository/
+    │           │   └── JdbiUserRepository.java
     │           └── InMemorySessionRepository.java
     └── config/
         └── DatabaseConfig.java          # HikariCP configuration
@@ -123,7 +133,7 @@ nova-infra/
 - `session/NettyConnection`: Wraps Netty Channel - implements `NetworkConnection`
 
 **Outbound Adapters:** Implement output ports to interact with external systems.
-- `MySqlUserRepository`: Persists users to MySQL via HikariCP
+- `JdbiUserRepository`: Persists users to MySQL via Jdbi 3 + HikariCP
 - `InMemorySessionRepository`: Tracks online users in memory
 
 ### nova-app (Application Layer)
@@ -168,8 +178,12 @@ nova-app/
           │
           ▼
 6. UserService (implementation) orchestrates:
-   a. userRepository.findBySsoTicket()  ──▶  MySqlUserRepository (SQL query)
-   b. userRepository.invalidateSsoTicket()
+   a. userRepository.findBySsoTicket()  ──▶  JdbiUserRepository
+      - UserTicketDao.findValidTicket() (validates SSO)
+      - UserDao.findById() (loads identity)
+      - UserDataDao.findByUserId() (loads profile)
+      - UserCurrencyDao.getCredits() (loads currencies)
+   b. userRepository.invalidateSsoTicket()  ──▶  UserTicketDao.markAsUsed()
    c. user.markOnline()
    d. Returns User entity
           │
@@ -330,7 +344,7 @@ When a Flash client connects, it first sends `<policy-file-request/>`. The serve
 
 ## Packet System
 
-The packet handling system follows the Uriel architecture pattern, adapted for Hexagonal Architecture. All packets are migrated from the Nitro HTML5 client with complete protocol coverage.
+The packet handling system uses **annotation-based auto-discovery** with ClassGraph, adapted for Hexagonal Architecture. All packets are migrated from the Nitro HTML5 client with complete protocol coverage.
 
 ### Packet Statistics
 
@@ -338,10 +352,9 @@ The packet handling system follows the Uriel architecture pattern, adapted for H
 |-----------|-------|-------------|
 | Incoming Headers | ~470 | Client → Server packet IDs (`Incoming.java`) |
 | Outgoing Headers | ~472 | Server → Client packet IDs (`Outgoing.java`) |
-| Parsers | ~457 | Parse client requests |
-| Composers | ~447 | Compose server responses |
-| Event Records | ~459 | Incoming data structures |
-| Message Records | ~447 | Outgoing data structures |
+| Parsers | ~457 | Parse client requests (`@ParsesPacket`) |
+| Composers | ~447 | Compose server responses (`@ComposesPacket`) |
+| Handlers | Auto-discovered | Business logic (`@HandlesPacket` + `@Inject`) |
 
 ### Naming Convention (Nitro → Nova)
 
@@ -358,12 +371,14 @@ Since Nitro is a client and Nova is a server, perspectives are inverted:
 
 | Component | Responsibility |
 |-----------|----------------|
-| `PacketParser<T>` | Converts raw bytes (ClientMessage) → typed event (IIncomingPacket) |
-| `PacketHandler<T>` | Processes events, calls domain use cases, sends responses |
-| `PacketComposer<T>` | Serializes messages (IOutgoingPacket) → PacketBuffer |
-| `PacketBuffer` | Low-level buffer for packet serialization |
+| `@ParsesPacket` | Annotation marking parser with header ID |
+| `@ComposesPacket` | Annotation marking composer with packet ID |
+| `@HandlesPacket` | Annotation marking handler with event type |
+| `PacketScanner` | ClassGraph-based scanner for auto-discovery |
+| `PacketParser<T>` | Converts raw bytes (ClientMessage) → typed event |
+| `PacketHandler<T>` | Processes events, calls domain use cases |
+| `PacketComposer<T>` | Serializes messages → PacketBuffer |
 | `PacketDispatcher` | Routes packets through parsers → handlers |
-| `PacketRegistry` | Auto-registers all parsers and composers at startup |
 
 ### Flow Diagram
 
@@ -384,50 +399,32 @@ Since Nitro is a client and Nova is a server, perspectives are inverted:
 
 **Incoming packet (client → server):**
 1. Create event class implementing `IIncomingPacket` in `packets/incoming/`
-2. Create parser extending `PacketParser<T>` in `packets/parsers/`
-3. Create handler extending `PacketHandler<T>` in `packets/handlers/`
-4. Register in `InfrastructureModule`
+2. Create parser with `@ParsesPacket(Incoming.X)` in `packets/parsers/`
+3. Create handler with `@HandlesPacket(Event.class)` + `@Inject` in `packets/handlers/`
+4. **No manual registration needed** - auto-discovered
 
 **Outgoing packet (server → client):**
 1. Create message class implementing `IOutgoingPacket` in `packets/outgoing/`
-2. Create composer extending `PacketComposer<T>` in `packets/composers/`
-3. Register in `InfrastructureModule`
+2. Create composer with `@ComposesPacket(Outgoing.X)` in `packets/composers/`
+3. **No manual registration needed** - auto-discovered
 
 ### Package Structure
 
 ```
 packets/
-├── IIncomingPacket.java              # Marker interface for incoming events
-├── IOutgoingPacket.java              # Marker interface for outgoing messages
-├── PacketDispatcher.java             # Central dispatcher
-├── PacketRegistry.java               # Auto-registration of all packets
+├── annotations/                       # Auto-discovery system
+│   ├── ParsesPacket.java              # @ParsesPacket(Incoming.X)
+│   ├── ComposesPacket.java            # @ComposesPacket(Outgoing.X)
+│   ├── HandlesPacket.java             # @HandlesPacket(Event.class)
+│   └── PacketScanner.java             # ClassGraph-based scanner
 ├── headers/
-│   ├── Incoming.java                 # ~470 incoming header IDs (client → server)
-│   └── Outgoing.java                 # ~472 outgoing header IDs (server → client)
+│   ├── Incoming.java                  # ~470 incoming header IDs
+│   └── Outgoing.java                  # ~472 outgoing header IDs
 ├── incoming/                          # Events from client (~459 records)
-│   ├── handshake/                     # SSOTicketMessageEvent, etc.
-│   ├── room/                          # Room actions (access/, action/, furniture/, etc.)
-│   ├── catalog/                       # Catalog requests
-│   ├── navigator/                     # Navigator requests
-│   └── ...                            # 30+ categories
 ├── outgoing/                          # Messages to client (~447 records)
-│   ├── PacketBuffer.java              # Serialization buffer
-│   ├── handshake/                     # AuthenticatedMessage, etc.
-│   ├── room/                          # Room data
-│   ├── user/                          # UserInfoMessage, UserCreditsMessage
-│   └── ...                            # 30+ categories
-├── parsers/                           # Parse client bytes → events (~457)
-│   ├── PacketParser.java              # Abstract base
-│   ├── PacketParserManager.java       # Registry by header ID
-│   └── {category}/                    # One parser per event
-├── composers/                         # Compose messages → bytes (~447)
-│   ├── PacketComposer.java            # Abstract base
-│   ├── PacketComposerManager.java     # Registry by message type
-│   └── {category}/                    # One composer per message
-└── handlers/                          # Business logic handlers
-    ├── PacketHandler.java             # Interface
-    ├── PacketHandlerManager.java      # Registry by event type
-    └── handshake/SsoTicketHandler.java
+├── parsers/                           # @ParsesPacket annotated (~457)
+├── composers/                         # @ComposesPacket annotated (~447)
+└── handlers/                          # @HandlesPacket + @Inject annotated
 ```
 
 ### Example: SSO Authentication
@@ -462,7 +459,18 @@ Guice binds interfaces to implementations at startup:
 bind(UserUseCase.class).to(UserService.class);
 
 // InfrastructureModule.java
-bind(UserRepository.class).to(MySqlUserRepository.class);
+@Provides @Singleton
+public Jdbi provideJdbi(HikariDataSource dataSource) {
+    Jdbi jdbi = Jdbi.create(dataSource);
+    jdbi.installPlugin(new SqlObjectPlugin());
+    return jdbi;
+}
+
+@Provides @Singleton
+public UserRepository provideUserRepository(Jdbi jdbi) {
+    return new JdbiUserRepository(jdbi);
+}
+
 bind(SessionRepository.class).to(InMemorySessionRepository.class);
 ```
 
@@ -501,21 +509,20 @@ Repositories abstract data access. The domain defines interfaces, infrastructure
 6. **Add packet handlers** in `nova-infra/adapter/in/network/packets/`
 7. **Wire in Guice modules**
 
-### Adding New Packets
+### Adding New Packets (Extending Architecture)
 
 **Outgoing (server → client):**
 1. Create `outgoing/{category}/MyMessage.java` (record implementing `IOutgoingPacket`)
-2. Create `composers/{category}/MyComposer.java`
+2. Create `composers/{category}/MyComposer.java` with `@ComposesPacket(Outgoing.X)`
 3. Add header constant to `Outgoing.java`
-4. Regenerate registry: `cd packet-migration-script && node generate-registry.js`
+4. **Auto-discovered at startup** - no manual registration
 
 **Incoming (client → server):**
 1. Create `incoming/{category}/MyMessageEvent.java` (record implementing `IIncomingPacket`)
-2. Create `parsers/{category}/MyParser.java`
-3. Create `handlers/{category}/MyHandler.java` (if business logic needed)
+2. Create `parsers/{category}/MyParser.java` with `@ParsesPacket(Incoming.X)`
+3. Create `handlers/{category}/MyHandler.java` with `@HandlesPacket(Event.class)` + `@Inject`
 4. Add header constant to `Incoming.java`
-5. Regenerate registry: `cd packet-migration-script && node generate-registry.js`
-6. Register handler in `InfrastructureModule` (handlers require manual registration)
+5. **Auto-discovered at startup** - no manual registration
 
 **Code Examples:**
 
@@ -527,11 +534,9 @@ public record UserInfoMessage(
     String figure
 ) implements IOutgoingPacket {}
 
-// Composer (serializes message to bytes)
+// Composer with @ComposesPacket annotation
+@ComposesPacket(Outgoing.USER_INFO)
 public class UserInfoComposer extends PacketComposer<UserInfoMessage> {
-    @Override
-    public int getPacketId() { return Outgoing.USER_INFO; }
-
     @Override
     protected void write(PacketBuffer packet, UserInfoMessage msg) {
         packet.appendInt(msg.userId());
@@ -545,21 +550,26 @@ public record SSOTicketMessageEvent(
     String ssoTicket
 ) implements IIncomingPacket {}
 
-// Parser (parses bytes to event)
+// Parser with @ParsesPacket annotation
+@ParsesPacket(Incoming.SECURITY_TICKET)
 public class SSOTicketParser extends PacketParser<SSOTicketMessageEvent> {
-    @Override
-    public int getHeaderId() { return Incoming.SECURITY_TICKET; }
-
     @Override
     public SSOTicketMessageEvent parse(ClientMessage message) {
         return new SSOTicketMessageEvent(message.readString());
     }
 }
 
-// Handler (business logic - calls domain use cases)
+// Handler with @HandlesPacket + @Inject (jakarta.inject)
+@HandlesPacket(SSOTicketMessageEvent.class)
 public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
     private final UserUseCase userUseCase;
     private final PacketComposerManager composerManager;
+
+    @Inject
+    public SsoTicketHandler(UserUseCase userUseCase, PacketComposerManager composerManager) {
+        this.userUseCase = userUseCase;
+        this.composerManager = composerManager;
+    }
 
     @Override
     public void handle(NetworkConnection connection, SSOTicketMessageEvent packet) {
@@ -569,19 +579,17 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
 }
 ```
 
-**Packet Registration:**
+**Packet Registration (Auto-Discovery):**
 
-Parsers and composers are auto-registered via `PacketRegistry`:
+All components are auto-discovered via `PacketScanner` using ClassGraph:
 ```java
 // In InfrastructureModule
-PacketRegistry.registerParsers(parserManager);   // 457 parsers
-PacketRegistry.registerComposers(composerManager); // 447 composers
+PacketScanner.registerParsers(parserManager);      // Scans @ParsesPacket
+PacketScanner.registerComposers(composerManager);  // Scans @ComposesPacket
+PacketScanner.registerHandlers(handlerManager, injector);  // Scans @HandlesPacket with DI
 ```
 
-Handlers require manual registration:
-```java
-manager.register(SSOTicketMessageEvent.class, new SsoTicketHandler(userUseCase, composerManager));
-```
+**No manual registration needed** - just add the annotation and it's auto-discovered at startup.
 
 ### Adding New Adapters
 
@@ -747,9 +755,9 @@ Unpooled.buffer()
 
 | Component | Lifecycle | Notes |
 |-----------|-----------|-------|
-| PacketParser | Singleton | Stateless, reused for all packets |
-| PacketHandler | Singleton | Holds injected dependencies only |
-| PacketComposer | Singleton | Stateless, reused for all packets |
+| PacketParser | Singleton | `@ParsesPacket` annotated, stateless |
+| PacketHandler | Singleton | `@HandlesPacket` + `@Inject`, Guice-instantiated |
+| PacketComposer | Singleton | `@ComposesPacket` annotated, stateless |
 | IIncomingPacket | Per-request | Short-lived DTO, GC-friendly |
 | IOutgoingPacket | Per-request | Short-lived DTO, GC-friendly |
 | PacketBuffer | Per-response | Uses pooled ByteBuf, recycled automatically |
