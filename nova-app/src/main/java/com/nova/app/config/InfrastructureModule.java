@@ -5,10 +5,15 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.nova.core.domain.api.room.RoomTaskScheduler;
-import com.nova.core.domain.repository.SessionRepository;
-import com.nova.core.domain.repository.UserRepository;
+import com.nova.core.domain.repository.*;
 import com.nova.infra.adapter.concurrency.StripedRoomTaskScheduler;
 import com.nova.infra.adapter.network.packets.PacketDispatcher;
+import com.nova.infra.adapter.persistence.InMemorySessionRepository;
+import com.nova.infra.adapter.persistence.repository.JdbiCatalogRepository;
+import com.nova.infra.adapter.persistence.repository.JdbiItemRepository;
+import com.nova.infra.adapter.persistence.repository.JdbiMessengerRepository;
+import com.nova.infra.adapter.persistence.repository.JdbiRoomRepository;
+import com.nova.infra.adapter.persistence.repository.JdbiUserRepository;
 import com.nova.infra.adapter.network.packets.annotations.PacketScanner;
 import com.nova.infra.adapter.network.packets.composers.PacketComposerManager;
 import com.nova.infra.adapter.network.packets.handlers.PacketHandlerManager;
@@ -80,6 +85,30 @@ public class InfrastructureModule extends AbstractModule {
     @Singleton
     public UserRepository provideUserRepository(Jdbi jdbi) {
         return new JdbiUserRepository(jdbi);
+    }
+
+    @Provides
+    @Singleton
+    public RoomRepository provideRoomRepository(Jdbi jdbi) {
+        return new JdbiRoomRepository(jdbi);
+    }
+
+    @Provides
+    @Singleton
+    public ItemRepository provideItemRepository(Jdbi jdbi) {
+        return new JdbiItemRepository(jdbi);
+    }
+
+    @Provides
+    @Singleton
+    public MessengerRepository provideMessengerRepository(Jdbi jdbi) {
+        return new JdbiMessengerRepository(jdbi);
+    }
+
+    @Provides
+    @Singleton
+    public CatalogRepository provideCatalogRepository(Jdbi jdbi, ItemRepository itemRepository) {
+        return new JdbiCatalogRepository(jdbi, itemRepository);
     }
 
     // === Packet System ===

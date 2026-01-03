@@ -6,11 +6,13 @@ import com.nova.infra.adapter.persistence.dao.permission.RankDao;
 import com.nova.infra.adapter.persistence.dao.user.UserCurrencyDao;
 import com.nova.infra.adapter.persistence.dao.user.UserDao;
 import com.nova.infra.adapter.persistence.dao.user.UserDataDao;
+import com.nova.infra.adapter.persistence.dao.user.UserSettingsDao;
 import com.nova.infra.adapter.persistence.dao.user.UserSubscriptionDao;
 import com.nova.infra.adapter.persistence.dao.user.UserTicketDao;
 import com.nova.infra.adapter.persistence.entity.permission.RankEntity;
 import com.nova.infra.adapter.persistence.entity.user.UserDataEntity;
 import com.nova.infra.adapter.persistence.entity.user.UserEntity;
+import com.nova.infra.adapter.persistence.entity.user.UserSettingsEntity;
 import com.nova.infra.adapter.persistence.entity.user.UserSubscriptionEntity;
 import com.nova.infra.adapter.persistence.entity.user.UserTicketEntity;
 import jakarta.inject.Inject;
@@ -108,8 +110,14 @@ public class JdbiUserRepository implements UserRepository {
                     dao -> dao.findByUserId(userId.value())
             );
 
+            // Load settings from user_settings table
+            Optional<UserSettingsEntity> settingsOpt = jdbi.withExtension(
+                    UserSettingsDao.class,
+                    dao -> dao.findByUserId(userId.value())
+            );
+
             return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), rankOpt.orElse(null),
-                    credits, pixels, diamonds, subscriptionOpt.orElse(null)));
+                    credits, pixels, diamonds, settingsOpt.orElse(null), subscriptionOpt.orElse(null)));
         } catch (Exception e) {
             LOGGER.error("Error finding user by ID: {}", userId, e);
             return Optional.empty();
@@ -154,8 +162,14 @@ public class JdbiUserRepository implements UserRepository {
                     dao -> dao.findByUserId(userId)
             );
 
+            // Load settings
+            Optional<UserSettingsEntity> settingsOpt = jdbi.withExtension(
+                    UserSettingsDao.class,
+                    dao -> dao.findByUserId(userId)
+            );
+
             return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), rankOpt.orElse(null),
-                    credits, pixels, diamonds, subscriptionOpt.orElse(null)));
+                    credits, pixels, diamonds, settingsOpt.orElse(null), subscriptionOpt.orElse(null)));
         } catch (Exception e) {
             LOGGER.error("Error finding user by username: {}", username, e);
             return Optional.empty();
@@ -215,11 +229,12 @@ public class JdbiUserRepository implements UserRepository {
      * - UserDataEntity → UserData (motto, figure, gender, homeRoomId, respect, etc.)
      * - RankEntity → UserRank (rankId, level, name)
      * - Currencies → UserCurrencies (credits, pixels, diamonds)
+     * - UserSettingsEntity → UserSettings (preferences, navigator, privacy)
      * - UserSubscriptionEntity → UserSubscription (club membership)
      */
     private User toDomainModel(UserEntity userEntity, UserDataEntity dataEntity,
                                RankEntity rankEntity, int credits, int pixels, int diamonds,
-                               UserSubscriptionEntity subscriptionEntity) {
+                               UserSettingsEntity settingsEntity, UserSubscriptionEntity subscriptionEntity) {
         // Map UserDataEntity → UserData Value Object
         UserData userData = mapToUserData(dataEntity);
 
@@ -228,6 +243,9 @@ public class JdbiUserRepository implements UserRepository {
 
         // Create UserCurrencies Value Object
         UserCurrencies currencies = UserCurrencies.of(credits, pixels, diamonds);
+
+        // Map UserSettingsEntity → UserSettings Value Object
+        UserSettings settings = mapToUserSettings(settingsEntity, dataEntity);
 
         // Map UserSubscriptionEntity → UserSubscription Value Object
         UserSubscription subscription = mapToUserSubscription(subscriptionEntity);
@@ -244,7 +262,7 @@ public class JdbiUserRepository implements UserRepository {
                 userData,
                 userRank,
                 currencies,
-                null, // settings (to be loaded separately)
+                settings,
                 subscription,
                 userEntity.createdAt(),
                 lastOnline
@@ -273,6 +291,38 @@ public class JdbiUserRepository implements UserRepository {
             return new UserRank(rankId, "Normal", 1);
         }
         return new UserRank(entity.id(), entity.name(), entity.level());
+    }
+
+    private UserSettings mapToUserSettings(UserSettingsEntity entity, UserDataEntity dataEntity) {
+        if (entity == null) {
+            return UserSettings.defaultSettings();
+        }
+
+        // Get homeRoomId from user_data if available
+        int homeRoomId = dataEntity != null && dataEntity.homeRoomId() != null
+                ? dataEntity.homeRoomId() : 0;
+
+        return new UserSettings(
+                entity.offlineMessagingEnabled(),         // allowDirectMail
+                false,                                     // canChangeName (not in DB, default false)
+                false,                                     // safetyLocked (not in DB, default false)
+                entity.navigatorX(),
+                entity.navigatorY(),
+                entity.navigatorWidth(),
+                entity.navigatorHeight(),
+                entity.navigatorSearchOpen(),
+                homeRoomId,
+                entity.chatPreference(),                   // chatPreferOldBubbles
+                entity.ignoreRoomInvite(),                 // chatIgnoreInvites
+                entity.cameraFollowEnabled(),              // chatCameraFollow
+                entity.volumeFurni(),
+                entity.volumeTrax(),
+                false,                                     // nuxCompleted (not in DB)
+                true,                                      // allowMimic (default true)
+                true,                                      // allowFollow (default true)
+                entity.friendRequestsEnabled(),            // allowFriendRequests
+                true                                       // allowTrade (default true)
+        );
     }
 
     private UserSubscription mapToUserSubscription(UserSubscriptionEntity entity) {
