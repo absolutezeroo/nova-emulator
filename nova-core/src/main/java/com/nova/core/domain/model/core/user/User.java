@@ -11,6 +11,7 @@ import java.util.Objects;
  * - UserData: motto, figure, gender, homeRoomId, respect, achievement
  * - UserRank: rankId, level, name, permissions
  * - UserCurrencies: credits, pixels, diamonds
+ * - UserSettings: preferences, navigator position, privacy settings
  */
 public class User {
     // Identity (immutable)
@@ -22,6 +23,8 @@ public class User {
     private UserData data;
     private final UserRank rank;
     private UserCurrencies currencies;
+    private UserSettings settings;
+    private UserSubscription subscription;
 
     // Status
     private Instant lastOnline;
@@ -31,15 +34,26 @@ public class User {
      * Full constructor for loading from database.
      */
     public User(UserId id, String username, UserData data, UserRank rank,
-                UserCurrencies currencies, Instant createdAt, Instant lastOnline) {
+                UserCurrencies currencies, UserSettings settings, UserSubscription subscription,
+                Instant createdAt, Instant lastOnline) {
         this.id = Objects.requireNonNull(id, "User ID cannot be null");
         this.username = Objects.requireNonNull(username, "Username cannot be null");
         this.data = data != null ? data : UserData.defaultData();
         this.rank = rank != null ? rank : UserRank.defaultRank();
         this.currencies = currencies != null ? currencies : UserCurrencies.empty();
+        this.settings = settings != null ? settings : UserSettings.defaultSettings();
+        this.subscription = subscription != null ? subscription : UserSubscription.none();
         this.createdAt = Objects.requireNonNull(createdAt, "Created date cannot be null");
         this.lastOnline = lastOnline != null ? lastOnline : createdAt;
         this.online = false;
+    }
+
+    /**
+     * Constructor without settings/subscription (backward compatibility).
+     */
+    public User(UserId id, String username, UserData data, UserRank rank,
+                UserCurrencies currencies, Instant createdAt, Instant lastOnline) {
+        this(id, username, data, rank, currencies, null, null, createdAt, lastOnline);
     }
 
     /**
@@ -50,6 +64,7 @@ public class User {
              new UserData(motto, figure, "M", null, 0, 0, 3, 3, 0),
              UserRank.defaultRank(),
              UserCurrencies.of(credits, 0, 0),
+             null, null,
              createdAt, createdAt);
     }
 
@@ -137,11 +152,23 @@ public class User {
     public Instant getLastOnline() { return lastOnline; }
     public boolean isOnline() { return online; }
 
+    // ============== Settings Methods ==============
+
+    public void updateNavigatorPosition(int x, int y, int width, int height) {
+        this.settings = settings.withNavigatorPosition(x, y, width, height);
+    }
+
+    public void updateSettings(UserSettings newSettings) {
+        this.settings = newSettings != null ? newSettings : UserSettings.defaultSettings();
+    }
+
     // ============== Value Object Getters ==============
 
     public UserData getData() { return data; }
     public UserRank getRank() { return rank; }
     public UserCurrencies getCurrencies() { return currencies; }
+    public UserSettings getSettings() { return settings; }
+    public UserSubscription getSubscription() { return subscription; }
 
     // ============== Convenience Getters (delegate to Value Objects) ==============
 
@@ -157,14 +184,32 @@ public class User {
     public int getRankId() { return rank.id(); }
     public int getRankLevel() { return rank.level(); }
     public String getRankName() { return rank.name(); }
-    public boolean hasClub() { return rank.hasClub(); }
-    public boolean isVip() { return rank.isVip(); }
+    public boolean hasClub() { return subscription.hasClub(); }
+    public boolean isVip() { return subscription.isVip(); }
     public boolean isStaff() { return rank.isStaff(); }
     public boolean isAmbassador() { return rank.isAmbassador(); }
+
+    public int getClubLevel() { return subscription.getClubLevel(); }
+    public int getSubscriptionDaysRemaining() { return subscription.getDaysRemaining(); }
+    public int getSubscriptionMinutesRemaining() { return subscription.getMinutesRemaining(); }
+    public int getMemberPeriods() { return subscription.memberPeriods(); }
+    public int getPeriodsAhead() { return subscription.periodsAhead(); }
+    public int getPastClubDays() { return subscription.pastClubDays(); }
+    public int getPastVipDays() { return subscription.pastVipDays(); }
+    public boolean hasEverBeenMember() { return subscription.hasEverBeenMember(); }
+    public String getSubscriptionProductName() { return subscription.getProductName(); }
 
     public int getCredits() { return currencies.credits(); }
     public int getPixels() { return currencies.pixels(); }
     public int getDiamonds() { return currencies.diamonds(); }
+
+    public boolean allowsDirectMail() { return settings.allowDirectMail(); }
+    public boolean canChangeName() { return settings.canChangeName(); }
+    public boolean isSafetyLocked() { return settings.safetyLocked(); }
+    public boolean allowsMimic() { return settings.allowMimic(); }
+    public boolean allowsFollow() { return settings.allowFollow(); }
+    public boolean allowsFriendRequests() { return settings.allowFriendRequests(); }
+    public boolean allowsTrade() { return settings.allowTrade(); }
 
     // ============== Equality ==============
 

@@ -130,6 +130,24 @@ CREATE TABLE IF NOT EXISTS user_settings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='User preferences and settings';
 
+-- User Subscriptions: Club membership (HC/VIP)
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+    user_id             INT UNSIGNED PRIMARY KEY,
+    subscription_type   ENUM('NONE', 'HABBO_CLUB', 'VIP') NOT NULL DEFAULT 'NONE',
+    started_at          TIMESTAMP NULL COMMENT 'When subscription started',
+    expires_at          TIMESTAMP NULL COMMENT 'When subscription expires',
+    member_periods      SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Number of subscription periods',
+    periods_ahead       SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Periods paid in advance',
+    past_club_days      INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Total days as HC member',
+    past_vip_days       INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Total days as VIP member',
+
+    FOREIGN KEY fk_subscription_user (user_id)
+        REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_expires (expires_at),
+    INDEX idx_type (subscription_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='User club subscriptions (HC/VIP)';
+
 -- ============================================================================
 -- CORE: Ranks & Permissions (Flexible System)
 -- ============================================================================

@@ -24,6 +24,9 @@ import com.nova.infra.adapter.network.packets.outgoing.user.UserSubscriptionMess
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 /**
  * Handles SSO ticket authentication requests.
  * <p>
@@ -39,6 +42,9 @@ import org.slf4j.LoggerFactory;
 public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SsoTicketHandler.class);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter
+            .ofPattern("dd-MM-yyyy HH:mm:ss")
+            .withZone(ZoneId.systemDefault());
 
     private final UserUseCase userUseCase;
     private final PacketComposerManager composerManager;
@@ -89,7 +95,7 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
         // User Permissions - rank/security level
         connection.send(composerManager.compose(
                 new UserPermissionsMessage(
-                        user.getRank().getClubLevel(),  // 0=none, 1=HC, 2=VIP
+                        user.getClubLevel(),            // 0=none, 1=HC, 2=VIP
                         user.getRankLevel(),            // Security level
                         user.isAmbassador()             // Ambassador flag
                 )
@@ -98,21 +104,22 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
         // Club Subscription - HC/VIP status
         connection.send(composerManager.compose(
                 new UserSubscriptionMessage(
-                        "habbo_club",         // Product name
-                        user.hasClub() ? 30 : 0,         // Days to period end
-                        user.hasClub() ? 1 : 0,          // Member periods
-                        0,                               // Periods subscribed ahead
+                        user.getSubscriptionProductName(),
+                        user.getSubscriptionDaysRemaining(),
+                        user.getMemberPeriods(),
+                        user.getPeriodsAhead(),
                         1,                               // Response type
-                        user.hasClub(),                  // Has ever been member
-                        user.isVip(),                    // Is VIP
-                        0,                               // Past club days
-                        0,                               // Past VIP days
-                        0,                               // Minutes until expiration
+                        user.hasEverBeenMember(),
+                        user.isVip(),
+                        user.getPastClubDays(),
+                        user.getPastVipDays(),
+                        user.getSubscriptionMinutesRemaining(),
                         0                                // Minutes since last modified
                 )
         ).getBuffer());
 
         // User Info - full profile data
+        String lastAccessDate = DATE_FORMATTER.format(user.getLastOnline());
         connection.send(composerManager.compose(
                 new UserInfoMessage(
                         user.getId().value(),
@@ -121,14 +128,14 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
                         user.getGender(),
                         user.getMotto(),
                         user.getUsername(),             // Real name (same as username)
-                        false,                          // Direct mail
+                        user.allowsDirectMail(),
                         user.getRespectReceived(),
                         user.getDailyRespectPoints(),
                         user.getDailyPetRespect(),
                         false,                          // Stream publishing allowed
-                        "",                             // Last access date
-                        false,                          // Can change name
-                        false                           // Safety locked
+                        lastAccessDate,
+                        user.canChangeName(),
+                        user.isSafetyLocked()
                 )
         ).getBuffer());
 
@@ -147,9 +154,17 @@ public class SsoTicketHandler implements PacketHandler<SSOTicketMessageEvent> {
                 AvatarEffectsMessage.empty()
         ).getBuffer());
 
-        // Navigator Settings (default window position)
+        // Navigator Settings (from user preferences)
+        var navSettings = user.getSettings();
         connection.send(composerManager.compose(
-                new NavigatorSettingsMessage(100, 100, 435, 535, false, 0)
+                new NavigatorSettingsMessage(
+                        navSettings.navigatorX(),
+                        navSettings.navigatorY(),
+                        navSettings.navigatorWidth(),
+                        navSettings.navigatorHeight(),
+                        navSettings.navigatorSearchOpen(),
+                        navSettings.navigatorHomeRoomId()
+                )
         ).getBuffer());
 
         // Messenger Init (friend limits)

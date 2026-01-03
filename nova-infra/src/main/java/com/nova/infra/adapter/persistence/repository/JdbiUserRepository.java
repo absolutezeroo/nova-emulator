@@ -6,10 +6,12 @@ import com.nova.infra.adapter.persistence.dao.permission.RankDao;
 import com.nova.infra.adapter.persistence.dao.user.UserCurrencyDao;
 import com.nova.infra.adapter.persistence.dao.user.UserDao;
 import com.nova.infra.adapter.persistence.dao.user.UserDataDao;
+import com.nova.infra.adapter.persistence.dao.user.UserSubscriptionDao;
 import com.nova.infra.adapter.persistence.dao.user.UserTicketDao;
 import com.nova.infra.adapter.persistence.entity.permission.RankEntity;
 import com.nova.infra.adapter.persistence.entity.user.UserDataEntity;
 import com.nova.infra.adapter.persistence.entity.user.UserEntity;
+import com.nova.infra.adapter.persistence.entity.user.UserSubscriptionEntity;
 import com.nova.infra.adapter.persistence.entity.user.UserTicketEntity;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -100,8 +102,14 @@ public class JdbiUserRepository implements UserRepository {
             int pixels = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getPixels(userId.value()));
             int diamonds = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getDiamonds(userId.value()));
 
+            // Load subscription from user_subscriptions table
+            Optional<UserSubscriptionEntity> subscriptionOpt = jdbi.withExtension(
+                    UserSubscriptionDao.class,
+                    dao -> dao.findByUserId(userId.value())
+            );
+
             return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), rankOpt.orElse(null),
-                    credits, pixels, diamonds));
+                    credits, pixels, diamonds, subscriptionOpt.orElse(null)));
         } catch (Exception e) {
             LOGGER.error("Error finding user by ID: {}", userId, e);
             return Optional.empty();
@@ -140,8 +148,14 @@ public class JdbiUserRepository implements UserRepository {
             int pixels = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getPixels(userId));
             int diamonds = jdbi.withExtension(UserCurrencyDao.class, dao -> dao.getDiamonds(userId));
 
+            // Load subscription
+            Optional<UserSubscriptionEntity> subscriptionOpt = jdbi.withExtension(
+                    UserSubscriptionDao.class,
+                    dao -> dao.findByUserId(userId)
+            );
+
             return Optional.of(toDomainModel(userEntity, dataOpt.orElse(null), rankOpt.orElse(null),
-                    credits, pixels, diamonds));
+                    credits, pixels, diamonds, subscriptionOpt.orElse(null)));
         } catch (Exception e) {
             LOGGER.error("Error finding user by username: {}", username, e);
             return Optional.empty();
@@ -201,9 +215,11 @@ public class JdbiUserRepository implements UserRepository {
      * - UserDataEntity → UserData (motto, figure, gender, homeRoomId, respect, etc.)
      * - RankEntity → UserRank (rankId, level, name)
      * - Currencies → UserCurrencies (credits, pixels, diamonds)
+     * - UserSubscriptionEntity → UserSubscription (club membership)
      */
     private User toDomainModel(UserEntity userEntity, UserDataEntity dataEntity,
-                               RankEntity rankEntity, int credits, int pixels, int diamonds) {
+                               RankEntity rankEntity, int credits, int pixels, int diamonds,
+                               UserSubscriptionEntity subscriptionEntity) {
         // Map UserDataEntity → UserData Value Object
         UserData userData = mapToUserData(dataEntity);
 
@@ -212,6 +228,9 @@ public class JdbiUserRepository implements UserRepository {
 
         // Create UserCurrencies Value Object
         UserCurrencies currencies = UserCurrencies.of(credits, pixels, diamonds);
+
+        // Map UserSubscriptionEntity → UserSubscription Value Object
+        UserSubscription subscription = mapToUserSubscription(subscriptionEntity);
 
         // Determine lastOnline
         Instant lastOnline = userEntity.createdAt();
@@ -225,6 +244,8 @@ public class JdbiUserRepository implements UserRepository {
                 userData,
                 userRank,
                 currencies,
+                null, // settings (to be loaded separately)
+                subscription,
                 userEntity.createdAt(),
                 lastOnline
         );
@@ -252,5 +273,27 @@ public class JdbiUserRepository implements UserRepository {
             return new UserRank(rankId, "Normal", 1);
         }
         return new UserRank(entity.id(), entity.name(), entity.level());
+    }
+
+    private UserSubscription mapToUserSubscription(UserSubscriptionEntity entity) {
+        if (entity == null) {
+            return UserSubscription.none();
+        }
+
+        UserSubscription.SubscriptionType type = switch (entity.subscriptionType()) {
+            case "VIP" -> UserSubscription.SubscriptionType.VIP;
+            case "HABBO_CLUB" -> UserSubscription.SubscriptionType.HABBO_CLUB;
+            default -> UserSubscription.SubscriptionType.NONE;
+        };
+
+        return new UserSubscription(
+                type,
+                entity.startedAt(),
+                entity.expiresAt(),
+                entity.memberPeriods(),
+                entity.periodsAhead(),
+                entity.pastClubDays(),
+                entity.pastVipDays()
+        );
     }
 }
