@@ -1,8 +1,4 @@
-package com.nova.core.domain.model;
-
-import com.nova.core.domain.model.user.UserCurrencies;
-import com.nova.core.domain.model.user.UserData;
-import com.nova.core.domain.model.user.UserRank;
+package com.nova.core.domain.model.core.user;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -69,6 +65,10 @@ public class User {
         }
 
         this.data = data.withFigure(newFigure);
+    }
+
+    public void updateGender(String newGender) {
+        this.data = data.withGender(newGender);
     }
 
     public void setHomeRoom(Integer roomId) {

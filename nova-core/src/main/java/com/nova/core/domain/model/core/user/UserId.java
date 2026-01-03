@@ -1,6 +1,4 @@
-package com.nova.core.domain.model;
-
-import java.util.Objects;
+package com.nova.core.domain.model.core.user;
 
 /**
  * Value Object representing a User's unique identifier.

@@ -1,4 +1,4 @@
-package com.nova.core.domain.model.user;
+package com.nova.core.domain.model.core.user;
 
 import java.util.Collections;
 import java.util.HashMap;

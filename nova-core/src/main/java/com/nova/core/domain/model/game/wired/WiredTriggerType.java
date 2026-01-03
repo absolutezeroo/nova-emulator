@@ -1,0 +1,40 @@
+package com.nova.core.domain.model.game.wired;
+
+/**
+ * Enumeration of Wired trigger types.
+ */
+public enum WiredTriggerType {
+    SAY_SOMETHING(0),
+    WALKS_ON_FURNI(1),
+    WALKS_OFF_FURNI(2),
+    AT_GIVEN_TIME(3),
+    STATE_CHANGED(4),
+    PERIODICALLY(6),
+    ENTER_ROOM(7),
+    GAME_STARTS(8),
+    GAME_ENDS(9),
+    SCORE_ACHIEVED(10),
+    COLLISION(11),
+    PERIODICALLY_LONG(12),
+    BOT_REACHED_STF(13),
+    BOT_REACHED_AVTR(14);
+
+    private final int code;
+
+    WiredTriggerType(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public static WiredTriggerType fromCode(int code) {
+        for (WiredTriggerType type : values()) {
+            if (type.code == code) {
+                return type;
+            }
+        }
+        return SAY_SOMETHING;
+    }
+}

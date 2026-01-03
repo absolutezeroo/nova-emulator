@@ -219,20 +219,20 @@ The `PacketRegistry.java` file can be deleted once all parsers/composers are mig
 
 **Complete Authentication Sequence (12 packets):**
 
-| #  | Message Class               | Status | Purpose                    |
-|----|-----------------------------|----|-------------------------------|
-| 1  | `AuthenticatedMessage`      | ✅ | Server confirms auth          |
-| 2  | `AvailabilityStatusMessage` | ✅ | Hotel is open                 |
-| 3  | `NavigatorHomeRoomMessage`  | ✅ | User's home room ID           |
-| 4  | `UserPermissionsMessage`    | ✅ | Rank/security level           |
-| 5  | `UserSubscriptionMessage`   | ✅ | HC/VIP club status            |
-| 6  | `UserInfoMessage`           | ✅ | Full profile data             |
-| 7  | `UserCreditsMessage`        | ✅ | Credits balance               |
-| 8  | `UserCurrencyMessage`       | ✅ | Pixels, diamonds              |
-| 9  | `AvatarEffectsMessage`      | ✅ | Effect inventory (empty)      |
-| 10 | `NavigatorSettingsMessage`  | ✅ | Navigator window config       |
-| 11 | `MessengerInitMessage`      | ✅ | Friend limits                 |
-| 12 | `FriendListFragmentMessage` | ✅ | Friends list (empty)          |
+| #  | Message Class               | Status | Purpose                  |
+|----|-----------------------------|--------|--------------------------|
+| 1  | `AuthenticatedMessage`      | ✅      | Server confirms auth     |
+| 2  | `AvailabilityStatusMessage` | ✅      | Hotel is open            |
+| 3  | `NavigatorHomeRoomMessage`  | ✅      | User's home room ID      |
+| 4  | `UserPermissionsMessage`    | ✅      | Rank/security level      |
+| 5  | `UserSubscriptionMessage`   | ✅      | HC/VIP club status       |
+| 6  | `UserInfoMessage`           | ✅      | Full profile data        |
+| 7  | `UserCreditsMessage`        | ✅      | Credits balance          |
+| 8  | `UserCurrencyMessage`       | ✅      | Pixels, diamonds         |
+| 9  | `AvatarEffectsMessage`      | ✅      | Effect inventory (empty) |
+| 10 | `NavigatorSettingsMessage`  | ✅      | Navigator window config  |
+| 11 | `MessengerInitMessage`      | ✅      | Friend limits            |
+| 12 | `FriendListFragmentMessage` | ✅      | Friends list (empty)     |
 
 ### 1.3 Database Layer (IMPLEMENTED)
 

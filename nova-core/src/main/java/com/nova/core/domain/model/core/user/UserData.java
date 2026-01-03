@@ -1,4 +1,4 @@
-package com.nova.core.domain.model.user;
+package com.nova.core.domain.model.core.user;
 
 import java.util.Objects;
 
@@ -40,6 +40,10 @@ public record UserData(
         return new UserData(motto, newFigure, gender, homeRoomId, respectReceived, respectGiven, dailyRespectPoints, dailyPetRespect, achievementScore);
     }
 
+    public UserData withGender(String newGender) {
+        return new UserData(motto, figure, newGender, homeRoomId, respectReceived, respectGiven, dailyRespectPoints, dailyPetRespect, achievementScore);
+    }
+
     public UserData withHomeRoom(Integer roomId) {
         return new UserData(motto, figure, gender, roomId, respectReceived, respectGiven, dailyRespectPoints, dailyPetRespect, achievementScore);
     }
@@ -52,5 +56,13 @@ public record UserData(
 
     public UserData withRespectReceived() {
         return new UserData(motto, figure, gender, homeRoomId, respectReceived + 1, respectGiven, dailyRespectPoints, dailyPetRespect, achievementScore);
+    }
+
+    public UserData withAchievementScore(int score) {
+        return new UserData(motto, figure, gender, homeRoomId, respectReceived, respectGiven, dailyRespectPoints, dailyPetRespect, score);
+    }
+
+    public UserData resetDailyRespect() {
+        return new UserData(motto, figure, gender, homeRoomId, respectReceived, respectGiven, 3, 3, achievementScore);
     }
 }
